@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { DragDropContext, Droppable, Draggable, type DropResult } from "@hello-pangea/dnd";
-import { Phone, Mail, ArrowLeft, Star, Plus, Users, ChevronDown, ChevronUp, X, Zap, Pencil, Check as CheckIcon, Building2, UserCircle, GripVertical } from "lucide-react";
+import { Phone, Mail, ArrowLeft, Star, Plus, Users, ChevronDown, ChevronUp, X, Zap, Pencil, Check as CheckIcon, Building2, UserCircle, GripVertical, CheckCircle2, XCircle } from "lucide-react";
 
 import { mockOrganizations, mockContacts, mockOpportunities, salesStageLabels, salesStageColors, type SalesStage, type Organization, type ContactPerson } from "@/data/mockData";
 import { Input } from "@/components/ui/input";
@@ -48,6 +48,8 @@ const PipelineView = ({ teamMembers }: PipelineViewProps) => {
   const [editingAction, setEditingAction] = useState<string | null>(null);
   const [editActionValue, setEditActionValue] = useState('');
   const [editActionOwner, setEditActionOwner] = useState('');
+  const [recordingOutcome, setRecordingOutcome] = useState<string | null>(null);
+  const [lossReason, setLossReason] = useState('');
 
   // Form state for new org
   const [newOrg, setNewOrg] = useState({ name: '', sector: '', stage: 'contact' as SalesStage, seriousness: 3, notes: '', nextAction: '', actionOwner: teamMembers[0] });
@@ -56,6 +58,25 @@ const PipelineView = ({ teamMembers }: PipelineViewProps) => {
   const handleSaveNextAction = (orgId: string) => {
     setOrganizations(prev => prev.map(o => o.id === orgId ? { ...o, nextAction: editActionValue, actionOwner: editActionOwner } : o));
     setEditingAction(null);
+  };
+
+  const handleRecordOutcome = (orgId: string, outcome: 'success' | 'lost') => {
+    const org = organizations.find(o => o.id === orgId);
+    if (!org) return;
+    
+    if (outcome === 'success') {
+      // Move to next stage
+      const currentIdx = stages.indexOf(org.stage);
+      const nextStage = currentIdx < stages.length - 1 ? stages[currentIdx + 1] : org.stage;
+      setOrganizations(prev => prev.map(o => o.id === orgId ? { ...o, stage: nextStage, nextAction: '', actionOwner: '' } : o));
+      setRecordingOutcome(null);
+    } else {
+      if (!lossReason.trim()) return;
+      // Mark as lost - remove from pipeline
+      setOrganizations(prev => prev.filter(o => o.id !== orgId));
+      setRecordingOutcome(null);
+      setLossReason('');
+    }
   };
 
   const handleDragEnd = (result: DropResult) => {
@@ -310,25 +331,64 @@ const PipelineView = ({ teamMembers }: PipelineViewProps) => {
                                           ))}
                                         </div>
                                       </div>
-                                    ) : (
-                                      <div
-                                        className="flex items-center gap-1.5 group/action cursor-pointer"
-                                        onClick={e => { e.stopPropagation(); setEditingAction(org.id); setEditActionValue(org.nextAction || ''); setEditActionOwner(org.actionOwner || teamMembers[0]); }}
-                                      >
-                                        <Zap className="w-3.5 h-3.5 text-warning shrink-0" />
-                                        <div className="flex-1 min-w-0">
-                                          {org.nextAction ? (
-                                            <p className="text-xs text-warning/90 leading-relaxed">{org.nextAction}</p>
-                                          ) : (
-                                            <p className="text-xs text-muted-foreground/50 italic">أضف الخطوة القادمة...</p>
-                                          )}
-                                          {org.actionOwner && (
-                                            <span className="text-[10px] text-muted-foreground flex items-center gap-0.5 mt-0.5">
-                                              <UserCircle className="w-3 h-3" /> {org.actionOwner}
-                                            </span>
-                                          )}
+                                    ) : recordingOutcome === org.id ? (
+                                      <div className="space-y-2" onClick={e => e.stopPropagation()}>
+                                        <p className="text-xs text-foreground mb-1">تسجيل نتيجة: <span className="text-warning">{org.nextAction}</span></p>
+                                        <button
+                                          onClick={() => handleRecordOutcome(org.id, 'success')}
+                                          className="w-full flex items-center justify-center gap-1 px-2 py-1.5 text-xs rounded-lg bg-success/10 border border-success/30 text-success hover:bg-success/20 transition-colors"
+                                        >
+                                          <CheckCircle2 className="w-3.5 h-3.5" /> نجاح - المرحلة التالية
+                                        </button>
+                                        <div className="space-y-1.5">
+                                          <Input
+                                            value={lossReason}
+                                            onChange={e => setLossReason(e.target.value)}
+                                            placeholder="سبب الخسارة..."
+                                            className="h-7 text-xs bg-background border-border"
+                                          />
+                                          <button
+                                            onClick={() => handleRecordOutcome(org.id, 'lost')}
+                                            disabled={!lossReason.trim()}
+                                            className="w-full flex items-center justify-center gap-1 px-2 py-1.5 text-xs rounded-lg bg-destructive/10 border border-destructive/30 text-destructive hover:bg-destructive/20 transition-colors disabled:opacity-40"
+                                          >
+                                            <XCircle className="w-3.5 h-3.5" /> خسارة
+                                          </button>
                                         </div>
-                                        <Pencil className="w-3 h-3 text-muted-foreground/0 group-hover/action:text-muted-foreground/50 transition-colors shrink-0" />
+                                        <button onClick={() => { setRecordingOutcome(null); setLossReason(''); }} className="w-full text-[10px] text-muted-foreground hover:text-foreground">
+                                          إلغاء
+                                        </button>
+                                      </div>
+                                    ) : (
+                                      <div className="flex items-center gap-1.5 group/action">
+                                        <div
+                                          className="flex items-center gap-1.5 flex-1 min-w-0 cursor-pointer"
+                                          onClick={e => { e.stopPropagation(); setEditingAction(org.id); setEditActionValue(org.nextAction || ''); setEditActionOwner(org.actionOwner || teamMembers[0]); }}
+                                        >
+                                          <Zap className="w-3.5 h-3.5 text-warning shrink-0" />
+                                          <div className="flex-1 min-w-0">
+                                            {org.nextAction ? (
+                                              <p className="text-xs text-warning/90 leading-relaxed">{org.nextAction}</p>
+                                            ) : (
+                                              <p className="text-xs text-muted-foreground/50 italic">أضف الخطوة القادمة...</p>
+                                            )}
+                                            {org.actionOwner && (
+                                              <span className="text-[10px] text-muted-foreground flex items-center gap-0.5 mt-0.5">
+                                                <UserCircle className="w-3 h-3" /> {org.actionOwner}
+                                              </span>
+                                            )}
+                                          </div>
+                                          <Pencil className="w-3 h-3 text-muted-foreground/0 group-hover/action:text-muted-foreground/50 transition-colors shrink-0" />
+                                        </div>
+                                        {org.nextAction && (
+                                          <button
+                                            onClick={e => { e.stopPropagation(); setRecordingOutcome(org.id); setLossReason(''); }}
+                                            className="p-1.5 rounded-lg bg-primary/10 hover:bg-primary/20 border border-primary/20 transition-colors shrink-0"
+                                            title="تسجيل النتيجة"
+                                          >
+                                            <CheckIcon className="w-3 h-3 text-primary" />
+                                          </button>
+                                        )}
                                       </div>
                                     )}
                                   </div>
