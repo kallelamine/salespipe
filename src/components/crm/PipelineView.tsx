@@ -481,6 +481,84 @@ const PipelineView = ({ teamMembers }: PipelineViewProps) => {
           })}
         </div>
       </DragDropContext>
+      </>
+      ) : (
+        /* List View */
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="gradient-card border border-border rounded-xl shadow-card overflow-hidden">
+          {/* Sort Controls */}
+          <div className="flex items-center gap-2 p-4 border-b border-border bg-secondary/30">
+            <ArrowUpDown className="w-4 h-4 text-muted-foreground" />
+            <span className="text-xs text-muted-foreground">ترتيب حسب:</span>
+            {([
+              { key: 'stage', label: 'المرحلة' },
+              { key: 'action', label: 'الخطوة القادمة' },
+              { key: 'owner', label: 'الموظف' },
+              { key: 'seriousness', label: 'الجدية' },
+            ] as { key: typeof sortBy; label: string }[]).map(opt => (
+              <button
+                key={opt.key}
+                onClick={() => setSortBy(opt.key)}
+                className={`px-3 py-1 text-xs rounded-lg border transition-colors ${
+                  sortBy === opt.key
+                    ? 'border-primary bg-primary/10 text-primary'
+                    : 'border-border text-muted-foreground hover:border-primary/30'
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Table Header */}
+          <div className="grid grid-cols-[2fr_1fr_2fr_1fr_1fr] gap-2 px-4 py-2.5 border-b border-border text-xs font-bold text-muted-foreground bg-secondary/20">
+            <span>الجهة</span>
+            <span>المرحلة</span>
+            <span>الخطوة القادمة</span>
+            <span>المسؤول</span>
+            <span>الجدية</span>
+          </div>
+
+          {/* Rows */}
+          <div className="divide-y divide-border">
+            {[...organizations]
+              .sort((a, b) => {
+                if (sortBy === 'stage') return stages.indexOf(a.stage) - stages.indexOf(b.stage);
+                if (sortBy === 'action') return (a.nextAction || '').localeCompare(b.nextAction || '');
+                if (sortBy === 'owner') return (a.actionOwner || '').localeCompare(b.actionOwner || '');
+                if (sortBy === 'seriousness') return b.seriousness - a.seriousness;
+                return 0;
+              })
+              .map(org => (
+                <motion.div
+                  key={org.id}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="grid grid-cols-[2fr_1fr_2fr_1fr_1fr] gap-2 px-4 py-3 items-center hover:bg-secondary/20 transition-colors"
+                >
+                  <div>
+                    <p className="text-sm font-medium text-foreground">{org.name}</p>
+                    <p className="text-[10px] text-muted-foreground">{org.sector}</p>
+                  </div>
+                  <div>
+                    <span className={`inline-flex items-center gap-1.5 px-2 py-1 text-[10px] rounded-full font-medium ${salesStageColors[org.stage]} bg-secondary/60`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${salesStageColors[org.stage]}`} />
+                      {salesStageLabels[org.stage]}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Zap className="w-3 h-3 text-warning shrink-0" />
+                    <span className="text-xs text-foreground/80 truncate">{org.nextAction || <span className="text-muted-foreground/50 italic">—</span>}</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <UserCircle className="w-3 h-3 text-muted-foreground" />
+                    <span className="text-xs text-foreground">{org.actionOwner || '—'}</span>
+                  </div>
+                  <StarRating rating={org.seriousness} />
+                </motion.div>
+              ))}
+          </div>
+        </motion.div>
+      )}
 
       {/* Add Contact Dialog */}
       <Dialog open={!!showAddContact} onOpenChange={() => setShowAddContact(null)}>
