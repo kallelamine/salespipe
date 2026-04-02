@@ -4,16 +4,20 @@ import Dashboard from "@/components/crm/Dashboard";
 import PipelineView from "@/components/crm/PipelineView";
 import PartnersView from "@/components/crm/PartnersView";
 import ActivitiesView from "@/components/crm/ActivitiesView";
+import TeamManagement from "@/components/crm/TeamManagement";
+import { teamMembers as defaultTeamMembers } from "@/data/mockData";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
+  const [teamMembers, setTeamMembers] = useState(defaultTeamMembers);
 
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard': return <Dashboard />;
-      case 'pipeline': return <PipelineView />;
+      case 'pipeline': return <PipelineView teamMembers={teamMembers} />;
       case 'partners': return <PartnersView />;
       case 'activities': return <ActivitiesView />;
+      case 'team': return <TeamManagement members={teamMembers} onUpdate={setTeamMembers} />;
       default: return <Dashboard />;
     }
   };
