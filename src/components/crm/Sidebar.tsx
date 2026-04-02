@@ -54,17 +54,25 @@ const CrmSidebar = ({ activeTab, onTabChange }: SidebarProps) => {
         })}
       </nav>
 
-      {/* User */}
-      <div className="p-4 border-t border-sidebar-border">
+      <div className="p-4 border-t border-sidebar-border space-y-3">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center">
             <Users className="w-4 h-4 text-muted-foreground" />
           </div>
-          <div>
-            <p className="text-sm font-medium text-sidebar-foreground">الرئيس التنفيذي</p>
-            <p className="text-xs text-muted-foreground">تطوير الأعمال</p>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-sidebar-foreground truncate">
+              {user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'مستخدم'}
+            </p>
+            <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
           </div>
         </div>
+        <button
+          onClick={signOut}
+          className="w-full flex items-center gap-2 px-4 py-2 rounded-lg text-sm text-destructive hover:bg-destructive/10 transition-colors"
+        >
+          <LogOut className="w-4 h-4" />
+          <span>تسجيل الخروج</span>
+        </button>
       </div>
     </aside>
   );
