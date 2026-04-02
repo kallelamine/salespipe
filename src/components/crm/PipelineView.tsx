@@ -48,6 +48,8 @@ const PipelineView = ({ teamMembers }: PipelineViewProps) => {
   const [editingAction, setEditingAction] = useState<string | null>(null);
   const [editActionValue, setEditActionValue] = useState('');
   const [editActionOwner, setEditActionOwner] = useState('');
+  const [recordingOutcome, setRecordingOutcome] = useState<string | null>(null);
+  const [lossReason, setLossReason] = useState('');
 
   // Form state for new org
   const [newOrg, setNewOrg] = useState({ name: '', sector: '', stage: 'contact' as SalesStage, seriousness: 3, notes: '', nextAction: '', actionOwner: teamMembers[0] });
