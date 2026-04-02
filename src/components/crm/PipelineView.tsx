@@ -3,10 +3,15 @@ import { motion } from "framer-motion";
 import { DragDropContext, Droppable, Draggable, type DropResult } from "@hello-pangea/dnd";
 import { Phone, Mail, ArrowLeft, Star, Plus, Users, ChevronDown, ChevronUp, X, Zap, Pencil, Check as CheckIcon, Building2, UserCircle, GripVertical } from "lucide-react";
 
-import { mockOrganizations, mockContacts, mockOpportunities, salesStageLabels, salesStageColors, teamMembers, type SalesStage, type Organization, type ContactPerson } from "@/data/mockData";
+import { mockOrganizations, mockContacts, mockOpportunities, salesStageLabels, salesStageColors, type SalesStage, type Organization, type ContactPerson } from "@/data/mockData";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import CsvImportDialog from "./CsvImportDialog";
+
+interface PipelineViewProps {
+  teamMembers: string[];
+}
 
 const stages: SalesStage[] = ['contact', 'lead', 'opportunity', 'project'];
 
