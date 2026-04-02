@@ -173,7 +173,7 @@ const PipelineView = ({ teamMembers }: PipelineViewProps) => {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <CsvImportDialog onImport={handleCsvImport} />
+          <CsvImportDialog />
           <div className="hidden md:flex items-center gap-2 text-xs text-muted-foreground">
             {stages.map((stage, i) => (
               <span key={stage} className="flex items-center gap-1">
