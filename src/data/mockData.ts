@@ -24,6 +24,7 @@ export interface Organization {
   seriousness: number; // 1-5 نجوم
   notes?: string;
   nextAction?: string;
+  actionOwner?: string; // عضو الفريق المسؤول عن الخطوة القادمة
   logo?: string; // URL or initials fallback
   createdAt: string;
 }
