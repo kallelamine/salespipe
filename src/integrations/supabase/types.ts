@@ -14,7 +14,388 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      action_logs: {
+        Row: {
+          action: string
+          action_date: string
+          created_at: string
+          custom_fields: Json | null
+          duration_days: number | null
+          from_stage: string
+          id: string
+          loss_reason: string | null
+          organization_id: string | null
+          outcome: string
+          owner_id: string | null
+          to_stage: string | null
+        }
+        Insert: {
+          action: string
+          action_date?: string
+          created_at?: string
+          custom_fields?: Json | null
+          duration_days?: number | null
+          from_stage: string
+          id?: string
+          loss_reason?: string | null
+          organization_id?: string | null
+          outcome?: string
+          owner_id?: string | null
+          to_stage?: string | null
+        }
+        Update: {
+          action?: string
+          action_date?: string
+          created_at?: string
+          custom_fields?: Json | null
+          duration_days?: number | null
+          from_stage?: string
+          id?: string
+          loss_reason?: string | null
+          organization_id?: string | null
+          outcome?: string
+          owner_id?: string | null
+          to_stage?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "action_logs_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "action_logs_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      activities: {
+        Row: {
+          assigned_to_id: string | null
+          completed: boolean
+          created_at: string
+          custom_fields: Json | null
+          due_date: string | null
+          id: string
+          organization_id: string
+          priority: string
+          title: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          assigned_to_id?: string | null
+          completed?: boolean
+          created_at?: string
+          custom_fields?: Json | null
+          due_date?: string | null
+          id?: string
+          organization_id: string
+          priority?: string
+          title: string
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          assigned_to_id?: string | null
+          completed?: boolean
+          created_at?: string
+          custom_fields?: Json | null
+          due_date?: string | null
+          id?: string
+          organization_id?: string
+          priority?: string
+          title?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activities_assigned_to_id_fkey"
+            columns: ["assigned_to_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "activities_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contacts: {
+        Row: {
+          assigned_to_id: string | null
+          created_at: string
+          custom_fields: Json | null
+          email: string | null
+          id: string
+          name: string
+          organization_id: string
+          phone: string | null
+          role: string | null
+          updated_at: string
+        }
+        Insert: {
+          assigned_to_id?: string | null
+          created_at?: string
+          custom_fields?: Json | null
+          email?: string | null
+          id?: string
+          name: string
+          organization_id: string
+          phone?: string | null
+          role?: string | null
+          updated_at?: string
+        }
+        Update: {
+          assigned_to_id?: string | null
+          created_at?: string
+          custom_fields?: Json | null
+          email?: string | null
+          id?: string
+          name?: string
+          organization_id?: string
+          phone?: string | null
+          role?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contacts_assigned_to_id_fkey"
+            columns: ["assigned_to_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contacts_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      custom_field_definitions: {
+        Row: {
+          created_at: string
+          field_label: string
+          field_name: string
+          field_type: string
+          id: string
+          is_required: boolean
+          options: Json | null
+          sort_order: number
+          table_name: string
+        }
+        Insert: {
+          created_at?: string
+          field_label: string
+          field_name: string
+          field_type?: string
+          id?: string
+          is_required?: boolean
+          options?: Json | null
+          sort_order?: number
+          table_name: string
+        }
+        Update: {
+          created_at?: string
+          field_label?: string
+          field_name?: string
+          field_type?: string
+          id?: string
+          is_required?: boolean
+          options?: Json | null
+          sort_order?: number
+          table_name?: string
+        }
+        Relationships: []
+      }
+      opportunities: {
+        Row: {
+          created_at: string
+          custom_fields: Json | null
+          id: string
+          notes: string | null
+          organization_id: string
+          status: string
+          title: string
+          updated_at: string
+          value: number | null
+        }
+        Insert: {
+          created_at?: string
+          custom_fields?: Json | null
+          id?: string
+          notes?: string | null
+          organization_id: string
+          status?: string
+          title: string
+          updated_at?: string
+          value?: number | null
+        }
+        Update: {
+          created_at?: string
+          custom_fields?: Json | null
+          id?: string
+          notes?: string | null
+          organization_id?: string
+          status?: string
+          title?: string
+          updated_at?: string
+          value?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "opportunities_organization_id_fkey"
+            columns: ["organization_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      organizations: {
+        Row: {
+          action_owner_id: string | null
+          created_at: string
+          custom_fields: Json | null
+          id: string
+          logo_url: string | null
+          name: string
+          next_action: string | null
+          notes: string | null
+          sector: string | null
+          seriousness: number
+          stage: string
+          updated_at: string
+        }
+        Insert: {
+          action_owner_id?: string | null
+          created_at?: string
+          custom_fields?: Json | null
+          id?: string
+          logo_url?: string | null
+          name: string
+          next_action?: string | null
+          notes?: string | null
+          sector?: string | null
+          seriousness?: number
+          stage?: string
+          updated_at?: string
+        }
+        Update: {
+          action_owner_id?: string | null
+          created_at?: string
+          custom_fields?: Json | null
+          id?: string
+          logo_url?: string | null
+          name?: string
+          next_action?: string | null
+          notes?: string | null
+          sector?: string | null
+          seriousness?: number
+          stage?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organizations_action_owner_id_fkey"
+            columns: ["action_owner_id"]
+            isOneToOne: false
+            referencedRelation: "team_members"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      partners: {
+        Row: {
+          contact_person: string | null
+          created_at: string
+          custom_fields: Json | null
+          id: string
+          last_contact: string | null
+          name: string
+          revenue: number | null
+          services: string[] | null
+          status: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          contact_person?: string | null
+          created_at?: string
+          custom_fields?: Json | null
+          id?: string
+          last_contact?: string | null
+          name: string
+          revenue?: number | null
+          services?: string[] | null
+          status?: string
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          contact_person?: string | null
+          created_at?: string
+          custom_fields?: Json | null
+          id?: string
+          last_contact?: string | null
+          name?: string
+          revenue?: number | null
+          services?: string[] | null
+          status?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      team_members: {
+        Row: {
+          created_at: string
+          custom_fields: Json | null
+          email: string | null
+          id: string
+          is_active: boolean
+          name: string
+          phone: string | null
+          role: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          custom_fields?: Json | null
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          phone?: string | null
+          role?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          custom_fields?: Json | null
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          phone?: string | null
+          role?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
