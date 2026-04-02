@@ -2,18 +2,21 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { TrendingDown, TrendingUp, Clock, BarChart3, UserCircle, AlertTriangle, CheckCircle2, XCircle, Filter } from "lucide-react";
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from "recharts";
-import { mockActionLogs, mockOrganizations, lostOrganizations, salesStageLabels, salesStageColors, type SalesStage, type ActionLog } from "@/data/mockData";
+import { useActionLogs, useOrganizations, useTeamMembers } from "@/hooks/useSupabaseData";
+import { salesStageLabels, type SalesStage } from "@/data/mockData";
 
 const PIE_COLORS = ['#f97316', '#ef4444', '#eab308'];
 
 const PerformanceView = () => {
+  const { data: actionLogs = [] } = useActionLogs();
+  const { data: organizations = [] } = useOrganizations();
+  const { data: teamMembers = [] } = useTeamMembers();
   const [filterOwner, setFilterOwner] = useState<string | null>(null);
   const [filterStage, setFilterStage] = useState<SalesStage | null>(null);
 
-  const allLogs = mockActionLogs;
-  const filteredLogs = allLogs.filter(log => {
-    if (filterOwner && log.owner !== filterOwner) return false;
-    if (filterStage && log.fromStage !== filterStage) return false;
+  const filteredLogs = actionLogs.filter(log => {
+    if (filterOwner && log.owner_id !== filterOwner) return false;
+    if (filterStage && log.from_stage !== filterStage) return false;
     return true;
   });
 
@@ -22,32 +25,32 @@ const PerformanceView = () => {
   const totalActions = filteredLogs.length;
   const conversionRate = totalActions > 0 ? Math.round((successLogs.length / totalActions) * 100) : 0;
 
-  // Average days per stage transition
   const avgDays = successLogs.length > 0
-    ? Math.round(successLogs.reduce((s, l) => s + (l.durationDays || 0), 0) / successLogs.length)
+    ? Math.round(successLogs.reduce((s, l) => s + (l.duration_days || 0), 0) / successLogs.length)
     : 0;
 
-  // Losses by stage
   const lossByStage = (['contact', 'lead', 'opportunity'] as SalesStage[]).map(stage => ({
     stage,
     label: salesStageLabels[stage],
-    count: lostLogs.filter(l => l.fromStage === stage).length,
+    count: lostLogs.filter(l => l.from_stage === stage).length,
   }));
 
-  // Team performance
-  const owners = [...new Set(allLogs.map(l => l.owner))];
-  const teamStats = owners.map(owner => {
-    const ownerLogs = allLogs.filter(l => l.owner === owner);
+  const owners = [...new Set(actionLogs.map(l => l.owner_id).filter(Boolean))];
+  const getOwnerName = (id: string | null) => teamMembers.find(m => m.id === id)?.name || '—';
+
+  const teamStats = owners.map(ownerId => {
+    const ownerLogs = actionLogs.filter(l => l.owner_id === ownerId);
     const wins = ownerLogs.filter(l => l.outcome === 'success').length;
     const losses = ownerLogs.filter(l => l.outcome === 'lost').length;
-    const avgD = ownerLogs.filter(l => l.outcome === 'success' && l.durationDays).length > 0
-      ? Math.round(ownerLogs.filter(l => l.outcome === 'success').reduce((s, l) => s + (l.durationDays || 0), 0) / ownerLogs.filter(l => l.outcome === 'success').length)
+    const avgD = ownerLogs.filter(l => l.outcome === 'success' && l.duration_days).length > 0
+      ? Math.round(ownerLogs.filter(l => l.outcome === 'success').reduce((s, l) => s + (l.duration_days || 0), 0) / ownerLogs.filter(l => l.outcome === 'success').length)
       : 0;
-    return { owner, total: ownerLogs.length, wins, losses, rate: ownerLogs.length > 0 ? Math.round((wins / ownerLogs.length) * 100) : 0, avgDays: avgD };
+    return { owner: getOwnerName(ownerId!), total: ownerLogs.length, wins, losses, rate: ownerLogs.length > 0 ? Math.round((wins / ownerLogs.length) * 100) : 0, avgDays: avgD };
   });
 
-  const getOrgName = (orgId: string) => {
-    return mockOrganizations.find(o => o.id === orgId)?.name || lostOrganizations[orgId] || orgId;
+  const getOrgName = (orgId: string | null) => {
+    if (!orgId) return '—';
+    return organizations.find(o => o.id === orgId)?.name || '—';
   };
 
   return (
@@ -62,7 +65,7 @@ const PerformanceView = () => {
             className="text-xs bg-secondary text-foreground border border-border rounded-lg px-2 py-1.5"
           >
             <option value="">كل الفريق</option>
-            {owners.map(o => <option key={o} value={o}>{o}</option>)}
+            {teamMembers.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
           </select>
           <select
             value={filterStage || ''}
@@ -105,7 +108,7 @@ const PerformanceView = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Pie Chart - Losses by Stage */}
+        {/* Pie Chart */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -148,7 +151,7 @@ const PerformanceView = () => {
           )}
         </motion.div>
 
-        {/* Bar Chart - Team Performance */}
+        {/* Bar Chart */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -175,7 +178,7 @@ const PerformanceView = () => {
         </motion.div>
       </div>
 
-      {/* Action Timeline */}
+      {/* Timeline */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -187,11 +190,9 @@ const PerformanceView = () => {
           <h3 className="text-sm font-bold text-foreground">الجدول الزمني للإجراءات</h3>
         </div>
         <div className="relative">
-          {/* Timeline line */}
           <div className="absolute right-[18px] top-0 bottom-0 w-0.5 bg-border" />
-          
           <div className="space-y-4">
-            {[...filteredLogs].sort((a, b) => b.date.localeCompare(a.date)).map((log, i) => (
+            {filteredLogs.map((log, i) => (
               <motion.div
                 key={log.id}
                 initial={{ opacity: 0, x: 10 }}
@@ -199,7 +200,6 @@ const PerformanceView = () => {
                 transition={{ delay: 0.7 + i * 0.05 }}
                 className="flex gap-4 relative"
               >
-                {/* Dot */}
                 <div className={`w-9 h-9 rounded-full shrink-0 flex items-center justify-center z-10 ${
                   log.outcome === 'success' ? 'bg-success/20' : log.outcome === 'lost' ? 'bg-destructive/20' : 'bg-warning/20'
                 }`}>
@@ -211,37 +211,35 @@ const PerformanceView = () => {
                     <Clock className="w-4 h-4 text-warning" />
                   )}
                 </div>
-                
-                {/* Content */}
                 <div className="flex-1 bg-secondary/40 rounded-lg p-3 min-w-0">
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-sm font-medium text-foreground">{log.action}</span>
-                    <span className="text-xs text-muted-foreground">{log.date}</span>
+                    <span className="text-xs text-muted-foreground">{log.action_date?.split('T')[0]}</span>
                   </div>
                   <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
-                    <span>{getOrgName(log.organizationId)}</span>
+                    <span>{getOrgName(log.organization_id)}</span>
                     <span>·</span>
                     <span className="flex items-center gap-1">
-                      <UserCircle className="w-3 h-3" /> {log.owner}
+                      <UserCircle className="w-3 h-3" /> {getOwnerName(log.owner_id)}
                     </span>
                     <span>·</span>
-                    <span>{salesStageLabels[log.fromStage]}</span>
-                    {log.toStage && (
+                    <span>{salesStageLabels[log.from_stage as SalesStage] || log.from_stage}</span>
+                    {log.to_stage && (
                       <>
                         <span>←</span>
-                        <span className="text-success">{salesStageLabels[log.toStage]}</span>
+                        <span className="text-success">{salesStageLabels[log.to_stage as SalesStage] || log.to_stage}</span>
                       </>
                     )}
-                    {log.durationDays !== undefined && log.durationDays > 0 && (
+                    {log.duration_days !== undefined && log.duration_days !== null && log.duration_days > 0 && (
                       <>
                         <span>·</span>
-                        <span className="text-warning">{log.durationDays} يوم</span>
+                        <span className="text-warning">{log.duration_days} يوم</span>
                       </>
                     )}
                   </div>
-                  {log.lossReason && (
+                  {log.loss_reason && (
                     <p className="text-xs text-destructive/80 mt-1.5 bg-destructive/5 rounded px-2 py-1">
-                      سبب الخسارة: {log.lossReason}
+                      سبب الخسارة: {log.loss_reason}
                     </p>
                   )}
                 </div>

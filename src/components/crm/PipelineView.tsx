@@ -3,11 +3,12 @@ import { motion } from "framer-motion";
 import { DragDropContext, Droppable, Draggable, type DropResult } from "@hello-pangea/dnd";
 import { Phone, Mail, ArrowLeft, Star, Plus, Users, ChevronDown, ChevronUp, X, Zap, Pencil, Check as CheckIcon, Building2, UserCircle, GripVertical, CheckCircle2, XCircle, LayoutGrid, List, ArrowUpDown } from "lucide-react";
 
-import { mockOrganizations, mockContacts, mockOpportunities, salesStageLabels, salesStageColors, type SalesStage, type Organization, type ContactPerson } from "@/data/mockData";
+import { salesStageLabels, salesStageColors, type SalesStage } from "@/data/mockData";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import CsvImportDialog from "./CsvImportDialog";
+import { useOrganizations, useContacts, useOpportunities, useCreateOrganization, useUpdateOrganization, useDeleteOrganization, useCreateContact, useCreateActionLog } from "@/hooks/useSupabaseData";
 
 interface PipelineViewProps {
   teamMembers: string[];
@@ -40,10 +41,17 @@ const StarRatingInput = ({ value, onChange }: { value: number; onChange: (v: num
 );
 
 const PipelineView = ({ teamMembers }: PipelineViewProps) => {
+  const { data: organizations = [] } = useOrganizations();
+  const { data: contacts = [] } = useContacts();
+  const { data: opportunities = [] } = useOpportunities();
+  const createOrg = useCreateOrganization();
+  const updateOrg = useUpdateOrganization();
+  const deleteOrg = useDeleteOrganization();
+  const createContact = useCreateContact();
+  const createActionLog = useCreateActionLog();
+
   const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');
   const [sortBy, setSortBy] = useState<'stage' | 'action' | 'owner' | 'seriousness'>('stage');
-  const [organizations, setOrganizations] = useState(mockOrganizations);
-  const [contacts, setContacts] = useState(mockContacts);
   const [expandedOrg, setExpandedOrg] = useState<string | null>(null);
   const [showAddOrg, setShowAddOrg] = useState(false);
   const [showAddContact, setShowAddContact] = useState<string | null>(null);
@@ -53,29 +61,42 @@ const PipelineView = ({ teamMembers }: PipelineViewProps) => {
   const [recordingOutcome, setRecordingOutcome] = useState<string | null>(null);
   const [lossReason, setLossReason] = useState('');
 
-  // Form state for new org
-  const [newOrg, setNewOrg] = useState({ name: '', sector: '', stage: 'contact' as SalesStage, seriousness: 3, notes: '', nextAction: '', actionOwner: teamMembers[0] });
-  const [newContact, setNewContact] = useState({ name: '', role: '', email: '', phone: '', assignedTo: teamMembers[0] });
+  const [newOrg, setNewOrg] = useState({ name: '', sector: '', stage: 'contact' as SalesStage, seriousness: 3, notes: '', nextAction: '', actionOwner: teamMembers[0] || '' });
+  const [newContact, setNewContact] = useState({ name: '', role: '', email: '', phone: '', assignedTo: teamMembers[0] || '' });
 
   const handleSaveNextAction = (orgId: string) => {
-    setOrganizations(prev => prev.map(o => o.id === orgId ? { ...o, nextAction: editActionValue, actionOwner: editActionOwner } : o));
+    updateOrg.mutate({ id: orgId, next_action: editActionValue, action_owner_id: undefined });
     setEditingAction(null);
   };
 
   const handleRecordOutcome = (orgId: string, outcome: 'success' | 'lost') => {
     const org = organizations.find(o => o.id === orgId);
     if (!org) return;
-    
+
     if (outcome === 'success') {
-      // Move to next stage
-      const currentIdx = stages.indexOf(org.stage);
+      const currentIdx = stages.indexOf(org.stage as SalesStage);
       const nextStage = currentIdx < stages.length - 1 ? stages[currentIdx + 1] : org.stage;
-      setOrganizations(prev => prev.map(o => o.id === orgId ? { ...o, stage: nextStage, nextAction: '', actionOwner: '' } : o));
+      createActionLog.mutate({
+        action: org.next_action || '',
+        from_stage: org.stage,
+        to_stage: nextStage,
+        outcome: 'success',
+        organization_id: orgId,
+        owner_id: org.action_owner_id,
+      });
+      updateOrg.mutate({ id: orgId, stage: nextStage, next_action: '', action_owner_id: null });
       setRecordingOutcome(null);
     } else {
       if (!lossReason.trim()) return;
-      // Mark as lost - remove from pipeline
-      setOrganizations(prev => prev.filter(o => o.id !== orgId));
+      createActionLog.mutate({
+        action: org.next_action || '',
+        from_stage: org.stage,
+        outcome: 'lost',
+        organization_id: orgId,
+        owner_id: org.action_owner_id,
+        loss_reason: lossReason,
+      });
+      deleteOrg.mutate(orgId);
       setRecordingOutcome(null);
       setLossReason('');
     }
@@ -85,41 +106,58 @@ const PipelineView = ({ teamMembers }: PipelineViewProps) => {
     const { draggableId, destination } = result;
     if (!destination) return;
     const newStage = destination.droppableId as SalesStage;
-    setOrganizations(prev => prev.map(o => o.id === draggableId ? { ...o, stage: newStage } : o));
+    const org = organizations.find(o => o.id === draggableId);
+    if (org && org.stage !== newStage) {
+      createActionLog.mutate({
+        action: `نقل إلى ${salesStageLabels[newStage]}`,
+        from_stage: org.stage,
+        to_stage: newStage,
+        outcome: 'success',
+        organization_id: draggableId,
+        owner_id: org.action_owner_id,
+      });
+      updateOrg.mutate({ id: draggableId, stage: newStage });
+    }
   };
 
   const handleAddOrg = () => {
     if (!newOrg.name.trim()) return;
-    const org: Organization = {
-      id: `org${Date.now()}`,
+    createOrg.mutate({
       name: newOrg.name,
       sector: newOrg.sector,
       stage: newOrg.stage,
       seriousness: newOrg.seriousness,
       notes: newOrg.notes,
-      nextAction: newOrg.nextAction,
-      actionOwner: newOrg.actionOwner,
-      createdAt: new Date().toISOString().split('T')[0],
-    };
-    setOrganizations(prev => [...prev, org]);
-    setNewOrg({ name: '', sector: '', stage: 'contact', seriousness: 3, notes: '', nextAction: '', actionOwner: teamMembers[0] });
+      next_action: newOrg.nextAction,
+    });
+    setNewOrg({ name: '', sector: '', stage: 'contact', seriousness: 3, notes: '', nextAction: '', actionOwner: teamMembers[0] || '' });
     setShowAddOrg(false);
   };
 
   const handleAddContact = (orgId: string) => {
     if (!newContact.name.trim()) return;
-    const contact: ContactPerson = {
-      id: `c${Date.now()}`,
-      organizationId: orgId,
+    createContact.mutate({
+      organization_id: orgId,
       name: newContact.name,
       role: newContact.role,
       email: newContact.email,
       phone: newContact.phone,
-      assignedTo: newContact.assignedTo,
-    };
-    setContacts(prev => [...prev, contact]);
-    setNewContact({ name: '', role: '', email: '', phone: '', assignedTo: teamMembers[0] });
+    });
+    setNewContact({ name: '', role: '', email: '', phone: '', assignedTo: teamMembers[0] || '' });
     setShowAddContact(null);
+  };
+
+  const handleCsvImport = (orgs: any[]) => {
+    orgs.forEach(org => {
+      createOrg.mutate({
+        name: org.name,
+        sector: org.sector || '',
+        stage: org.stage || 'contact',
+        seriousness: org.seriousness || 3,
+        notes: org.notes || '',
+        next_action: org.nextAction || '',
+      });
+    });
   };
 
   return (
@@ -146,7 +184,7 @@ const PipelineView = ({ teamMembers }: PipelineViewProps) => {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <CsvImportDialog onImport={(orgs) => setOrganizations(prev => [...prev, ...orgs])} />
+          <CsvImportDialog onImport={handleCsvImport} />
           <div className="hidden md:flex items-center gap-2 text-xs text-muted-foreground">
             {stages.map((stage, i) => (
               <span key={stage} className="flex items-center gap-1">
@@ -226,7 +264,7 @@ const PipelineView = ({ teamMembers }: PipelineViewProps) => {
                     ))}
                   </div>
                 </div>
-                <Button onClick={handleAddOrg} className="w-full gradient-gold text-primary-foreground shadow-gold">إضافة</Button>
+                <Button onClick={handleAddOrg} className="w-full gradient-gold text-primary-foreground shadow-gold" disabled={createOrg.isPending}>إضافة</Button>
               </div>
             </DialogContent>
           </Dialog>
@@ -248,7 +286,6 @@ const PipelineView = ({ teamMembers }: PipelineViewProps) => {
                 transition={{ delay: stageIndex * 0.1 }}
                 className="space-y-3"
               >
-                {/* Stage Header */}
                 <div className="flex items-center justify-between px-1">
                   <div className="flex items-center gap-2">
                     <span className={`w-3 h-3 rounded-full ${salesStageColors[stage]}`} />
@@ -259,7 +296,6 @@ const PipelineView = ({ teamMembers }: PipelineViewProps) => {
                   </span>
                 </div>
 
-                {/* Droppable Column */}
                 <Droppable droppableId={stage}>
                   {(provided, snapshot) => (
                     <div
@@ -268,8 +304,8 @@ const PipelineView = ({ teamMembers }: PipelineViewProps) => {
                       className={`space-y-2 min-h-[80px] rounded-lg p-1 transition-colors ${snapshot.isDraggingOver ? 'bg-primary/5 border border-dashed border-primary/30' : ''}`}
                     >
                       {stageOrgs.map((org, index) => {
-                        const orgContacts = contacts.filter(c => c.organizationId === org.id);
-                        const orgOpportunities = mockOpportunities.filter(o => o.organizationId === org.id);
+                        const orgContacts = contacts.filter(c => c.organization_id === org.id);
+                        const orgOpportunities = opportunities.filter(o => o.organization_id === org.id);
                         const isExpanded = expandedOrg === org.id;
                         const totalValue = orgOpportunities.reduce((sum, o) => sum + (o.value || 0), 0);
 
@@ -281,12 +317,10 @@ const PipelineView = ({ teamMembers }: PipelineViewProps) => {
                                 {...provided.draggableProps}
                                 className={`gradient-card border border-border rounded-lg shadow-card hover:border-primary/30 transition-colors ${snapshot.isDragging ? 'shadow-lg ring-2 ring-primary/20' : ''}`}
                               >
-                                {/* Org Header */}
                                 <div
                                   className="p-4 cursor-pointer"
                                   onClick={() => setExpandedOrg(isExpanded ? null : org.id)}
                                 >
-                                  {/* Icon + Name row */}
                                   <div className="flex items-start gap-3 mb-3">
                                     <div {...provided.dragHandleProps} className="h-9 w-9 shrink-0 rounded-lg bg-secondary flex items-center justify-center border border-border cursor-grab active:cursor-grabbing hover:bg-secondary/80 transition-colors">
                                       <GripVertical className="w-4 h-4 text-muted-foreground" />
@@ -300,7 +334,6 @@ const PipelineView = ({ teamMembers }: PipelineViewProps) => {
                                     </div>
                                   </div>
 
-                                  {/* Stats row */}
                                   <div className="flex items-center justify-between mb-2">
                                     <StarRating rating={org.seriousness} />
                                     <div className="flex items-center gap-3">
@@ -355,7 +388,7 @@ const PipelineView = ({ teamMembers }: PipelineViewProps) => {
                                       </div>
                                     ) : recordingOutcome === org.id ? (
                                       <div className="space-y-2" onClick={e => e.stopPropagation()}>
-                                        <p className="text-xs text-foreground mb-1">تسجيل نتيجة: <span className="text-warning">{org.nextAction}</span></p>
+                                        <p className="text-xs text-foreground mb-1">تسجيل نتيجة: <span className="text-warning">{org.next_action}</span></p>
                                         <button
                                           onClick={() => handleRecordOutcome(org.id, 'success')}
                                           className="w-full flex items-center justify-center gap-1 px-2 py-1.5 text-xs rounded-lg bg-success/10 border border-success/30 text-success hover:bg-success/20 transition-colors"
@@ -385,24 +418,19 @@ const PipelineView = ({ teamMembers }: PipelineViewProps) => {
                                       <div className="flex items-center gap-1.5 group/action">
                                         <div
                                           className="flex items-center gap-1.5 flex-1 min-w-0 cursor-pointer"
-                                          onClick={e => { e.stopPropagation(); setEditingAction(org.id); setEditActionValue(org.nextAction || ''); setEditActionOwner(org.actionOwner || teamMembers[0]); }}
+                                          onClick={e => { e.stopPropagation(); setEditingAction(org.id); setEditActionValue(org.next_action || ''); setEditActionOwner(''); }}
                                         >
                                           <Zap className="w-3.5 h-3.5 text-warning shrink-0" />
                                           <div className="flex-1 min-w-0">
-                                            {org.nextAction ? (
-                                              <p className="text-xs text-warning/90 leading-relaxed">{org.nextAction}</p>
+                                            {org.next_action ? (
+                                              <p className="text-xs text-warning/90 leading-relaxed">{org.next_action}</p>
                                             ) : (
                                               <p className="text-xs text-muted-foreground/50 italic">أضف الخطوة القادمة...</p>
-                                            )}
-                                            {org.actionOwner && (
-                                              <span className="text-[10px] text-muted-foreground flex items-center gap-0.5 mt-0.5">
-                                                <UserCircle className="w-3 h-3" /> {org.actionOwner}
-                                              </span>
                                             )}
                                           </div>
                                           <Pencil className="w-3 h-3 text-muted-foreground/0 group-hover/action:text-muted-foreground/50 transition-colors shrink-0" />
                                         </div>
-                                        {org.nextAction && (
+                                        {org.next_action && (
                                           <button
                                             onClick={e => { e.stopPropagation(); setRecordingOutcome(org.id); setLossReason(''); }}
                                             className="p-1.5 rounded-lg bg-primary/10 hover:bg-primary/20 border border-primary/20 transition-colors shrink-0"
@@ -416,10 +444,9 @@ const PipelineView = ({ teamMembers }: PipelineViewProps) => {
                                   </div>
                                 </div>
 
-                                {/* Expanded: Contacts + Opportunities */}
+                                {/* Expanded */}
                                 {isExpanded && (
                                   <div className="px-4 pb-4 space-y-3 border-t border-border pt-3">
-                                    {/* Contacts */}
                                     <div>
                                       <div className="flex items-center justify-between mb-2">
                                         <span className="text-xs font-bold text-muted-foreground">الأشخاص</span>
@@ -434,7 +461,7 @@ const PipelineView = ({ teamMembers }: PipelineViewProps) => {
                                         <div key={contact.id} className="flex items-center justify-between py-1.5">
                                           <div>
                                             <p className="text-xs font-medium text-foreground">{contact.name}</p>
-                                            <p className="text-[10px] text-muted-foreground">{contact.role} · {contact.assignedTo}</p>
+                                            <p className="text-[10px] text-muted-foreground">{contact.role}</p>
                                           </div>
                                           <div className="flex items-center gap-1">
                                             <button className="p-1 rounded bg-secondary hover:bg-secondary/80">
@@ -448,7 +475,6 @@ const PipelineView = ({ teamMembers }: PipelineViewProps) => {
                                       ))}
                                     </div>
 
-                                    {/* Opportunities */}
                                     {orgOpportunities.length > 0 && (
                                       <div>
                                         <span className="text-xs font-bold text-muted-foreground block mb-2">الفرص</span>
@@ -461,7 +487,6 @@ const PipelineView = ({ teamMembers }: PipelineViewProps) => {
                                       </div>
                                     )}
 
-                                    {/* Notes */}
                                     {org.notes && (
                                       <p className="text-xs text-muted-foreground bg-secondary/50 rounded p-2">{org.notes}</p>
                                     )}
@@ -485,7 +510,6 @@ const PipelineView = ({ teamMembers }: PipelineViewProps) => {
       ) : (
         /* List View */
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="gradient-card border border-border rounded-xl shadow-card overflow-hidden">
-          {/* Sort Controls */}
           <div className="flex items-center gap-2 p-4 border-b border-border bg-secondary/30">
             <ArrowUpDown className="w-4 h-4 text-muted-foreground" />
             <span className="text-xs text-muted-foreground">ترتيب حسب:</span>
@@ -509,7 +533,6 @@ const PipelineView = ({ teamMembers }: PipelineViewProps) => {
             ))}
           </div>
 
-          {/* Table Header */}
           <div className="grid grid-cols-[2fr_1fr_2fr_1fr_1fr] gap-2 px-4 py-2.5 border-b border-border text-xs font-bold text-muted-foreground bg-secondary/20">
             <span>الجهة</span>
             <span>المرحلة</span>
@@ -518,13 +541,12 @@ const PipelineView = ({ teamMembers }: PipelineViewProps) => {
             <span>الجدية</span>
           </div>
 
-          {/* Rows */}
           <div className="divide-y divide-border">
             {[...organizations]
               .sort((a, b) => {
-                if (sortBy === 'stage') return stages.indexOf(a.stage) - stages.indexOf(b.stage);
-                if (sortBy === 'action') return (a.nextAction || '').localeCompare(b.nextAction || '');
-                if (sortBy === 'owner') return (a.actionOwner || '').localeCompare(b.actionOwner || '');
+                if (sortBy === 'stage') return stages.indexOf(a.stage as SalesStage) - stages.indexOf(b.stage as SalesStage);
+                if (sortBy === 'action') return (a.next_action || '').localeCompare(b.next_action || '');
+                if (sortBy === 'owner') return (a.action_owner_id || '').localeCompare(b.action_owner_id || '');
                 if (sortBy === 'seriousness') return b.seriousness - a.seriousness;
                 return 0;
               })
@@ -540,18 +562,18 @@ const PipelineView = ({ teamMembers }: PipelineViewProps) => {
                     <p className="text-[10px] text-muted-foreground">{org.sector}</p>
                   </div>
                   <div>
-                    <span className={`inline-flex items-center gap-1.5 px-2 py-1 text-[10px] rounded-full font-medium ${salesStageColors[org.stage]} bg-secondary/60`}>
-                      <span className={`w-1.5 h-1.5 rounded-full ${salesStageColors[org.stage]}`} />
-                      {salesStageLabels[org.stage]}
+                    <span className={`inline-flex items-center gap-1.5 px-2 py-1 text-[10px] rounded-full font-medium ${salesStageColors[org.stage as SalesStage] || 'bg-secondary'} bg-secondary/60`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${salesStageColors[org.stage as SalesStage] || 'bg-secondary'}`} />
+                      {salesStageLabels[org.stage as SalesStage] || org.stage}
                     </span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <Zap className="w-3 h-3 text-warning shrink-0" />
-                    <span className="text-xs text-foreground/80 truncate">{org.nextAction || <span className="text-muted-foreground/50 italic">—</span>}</span>
+                    <span className="text-xs text-foreground/80 truncate">{org.next_action || <span className="text-muted-foreground/50 italic">—</span>}</span>
                   </div>
                   <div className="flex items-center gap-1">
                     <UserCircle className="w-3 h-3 text-muted-foreground" />
-                    <span className="text-xs text-foreground">{org.actionOwner || '—'}</span>
+                    <span className="text-xs text-foreground">—</span>
                   </div>
                   <StarRating rating={org.seriousness} />
                 </motion.div>
@@ -602,7 +624,7 @@ const PipelineView = ({ teamMembers }: PipelineViewProps) => {
                 ))}
               </div>
             </div>
-            <Button onClick={() => showAddContact && handleAddContact(showAddContact)} className="w-full gradient-gold text-primary-foreground shadow-gold">
+            <Button onClick={() => showAddContact && handleAddContact(showAddContact)} className="w-full gradient-gold text-primary-foreground shadow-gold" disabled={createContact.isPending}>
               إضافة
             </Button>
           </div>

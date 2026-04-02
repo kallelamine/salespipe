@@ -1,11 +1,15 @@
 import StatsCards from "./StatsCards";
 import { motion } from "framer-motion";
-import { mockOrganizations, mockActivities, salesStageLabels, salesStageColors } from "@/data/mockData";
 import { Clock, TrendingUp } from "lucide-react";
+import { useOrganizations, useActivities } from "@/hooks/useSupabaseData";
+import { salesStageLabels, salesStageColors, type SalesStage } from "@/data/mockData";
 
 const Dashboard = () => {
-  const recentOrgs = [...mockOrganizations].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 4);
-  const upcomingActivities = mockActivities.filter(a => !a.completed).slice(0, 4);
+  const { data: organizations = [] } = useOrganizations();
+  const { data: activities = [] } = useActivities();
+
+  const recentOrgs = [...organizations].slice(0, 4);
+  const upcomingActivities = activities.filter(a => !a.completed).slice(0, 4);
 
   return (
     <div className="space-y-6">
@@ -34,8 +38,8 @@ const Dashboard = () => {
                   <p className="text-sm font-medium text-foreground">{org.name}</p>
                   <p className="text-xs text-muted-foreground">{org.sector}</p>
                 </div>
-                <span className={`text-xs px-2 py-0.5 rounded-full ${salesStageColors[org.stage]}/20 text-foreground`}>
-                  {salesStageLabels[org.stage]}
+                <span className={`text-xs px-2 py-0.5 rounded-full ${salesStageColors[org.stage as SalesStage] || 'bg-secondary'}/20 text-foreground`}>
+                  {salesStageLabels[org.stage as SalesStage] || org.stage}
                 </span>
               </div>
             ))}
@@ -57,7 +61,7 @@ const Dashboard = () => {
               <div key={activity.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
                 <div>
                   <p className="text-sm font-medium text-foreground">{activity.title}</p>
-                  <p className="text-xs text-muted-foreground">{activity.dueDate}</p>
+                  <p className="text-xs text-muted-foreground">{activity.due_date}</p>
                 </div>
                 <span className={`w-2 h-2 rounded-full ${
                   activity.priority === 'high' ? 'bg-destructive' : activity.priority === 'medium' ? 'bg-warning' : 'bg-muted-foreground'

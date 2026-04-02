@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Phone, Mail, Calendar, CheckSquare, RotateCcw, Check, Presentation } from "lucide-react";
-import { mockActivities, mockOrganizations } from "@/data/mockData";
+import { useActivities, useOrganizations, useUpdateActivity } from "@/hooks/useSupabaseData";
 
 const typeIcons: Record<string, typeof Phone> = {
   call: Phone,
@@ -26,13 +26,21 @@ const priorityColors: Record<string, string> = {
   low: 'border-r-muted-foreground',
 };
 
-const getOrgName = (orgId: string) => {
-  return mockOrganizations.find(o => o.id === orgId)?.name || orgId;
-};
-
 const ActivitiesView = () => {
-  const pending = mockActivities.filter(a => !a.completed);
-  const completed = mockActivities.filter(a => a.completed);
+  const { data: activities = [] } = useActivities();
+  const { data: organizations = [] } = useOrganizations();
+  const updateActivity = useUpdateActivity();
+
+  const getOrgName = (orgId: string) => {
+    return organizations.find(o => o.id === orgId)?.name || orgId;
+  };
+
+  const pending = activities.filter(a => !a.completed);
+  const completed = activities.filter(a => a.completed);
+
+  const handleComplete = (id: string) => {
+    updateActivity.mutate({ id, completed: true });
+  };
 
   return (
     <div className="space-y-6">
@@ -61,10 +69,13 @@ const ActivitiesView = () => {
               <div className="flex-1 min-w-0">
                 <h4 className="text-sm font-medium text-foreground truncate">{activity.title}</h4>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  {typeLabels[activity.type]} · {getOrgName(activity.organizationId)} · {activity.dueDate}
+                  {typeLabels[activity.type]} · {getOrgName(activity.organization_id)} · {activity.due_date}
                 </p>
               </div>
-              <button className="p-2 rounded-md bg-secondary hover:bg-success/20 transition-colors shrink-0">
+              <button
+                onClick={() => handleComplete(activity.id)}
+                className="p-2 rounded-md bg-secondary hover:bg-success/20 transition-colors shrink-0"
+              >
                 <Check className="w-4 h-4 text-muted-foreground" />
               </button>
             </motion.div>
@@ -87,7 +98,7 @@ const ActivitiesView = () => {
                 </div>
                 <div className="flex-1 min-w-0">
                   <h4 className="text-sm font-medium text-foreground line-through truncate">{activity.title}</h4>
-                  <p className="text-xs text-muted-foreground mt-0.5">{getOrgName(activity.organizationId)}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{getOrgName(activity.organization_id)}</p>
                 </div>
                 <Check className="w-4 h-4 text-success shrink-0" />
               </div>
