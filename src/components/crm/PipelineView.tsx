@@ -214,8 +214,40 @@ const PipelineView = () => {
                                   {totalValue.toLocaleString()} ر.س
                                 </span>
                               )}
-                            </div>
                           </div>
+
+                          {/* Next Best Action */}
+                          {editingAction === org.id ? (
+                            <div className="mt-2 flex items-center gap-1" onClick={e => e.stopPropagation()}>
+                              <Input
+                                value={editActionValue}
+                                onChange={e => setEditActionValue(e.target.value)}
+                                placeholder="الخطوة القادمة..."
+                                className="h-7 text-xs bg-secondary border-border"
+                                autoFocus
+                                onKeyDown={e => e.key === 'Enter' && handleSaveNextAction(org.id)}
+                              />
+                              <button onClick={() => handleSaveNextAction(org.id)} className="p-1 rounded bg-success/20 hover:bg-success/30 shrink-0">
+                                <CheckIcon className="w-3 h-3 text-success" />
+                              </button>
+                              <button onClick={() => setEditingAction(null)} className="p-1 rounded bg-secondary hover:bg-destructive/20 shrink-0">
+                                <X className="w-3 h-3 text-muted-foreground" />
+                              </button>
+                            </div>
+                          ) : (
+                            <div
+                              className="mt-2 flex items-center gap-1.5 group/action cursor-pointer"
+                              onClick={e => { e.stopPropagation(); setEditingAction(org.id); setEditActionValue(org.nextAction || ''); }}
+                            >
+                              <Zap className="w-3 h-3 text-warning shrink-0" />
+                              {org.nextAction ? (
+                                <p className="text-[11px] text-warning/90 leading-tight flex-1">{org.nextAction}</p>
+                              ) : (
+                                <p className="text-[11px] text-muted-foreground/50 italic flex-1">أضف الخطوة القادمة...</p>
+                              )}
+                              <Pencil className="w-3 h-3 text-muted-foreground/0 group-hover/action:text-muted-foreground/50 transition-colors shrink-0" />
+                            </div>
+                          )}
                         </div>
 
                         {/* Expanded: Contacts + Opportunities */}
