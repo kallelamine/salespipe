@@ -3,10 +3,15 @@ import { motion } from "framer-motion";
 import { DragDropContext, Droppable, Draggable, type DropResult } from "@hello-pangea/dnd";
 import { Phone, Mail, ArrowLeft, Star, Plus, Users, ChevronDown, ChevronUp, X, Zap, Pencil, Check as CheckIcon, Building2, UserCircle, GripVertical } from "lucide-react";
 
-import { mockOrganizations, mockContacts, mockOpportunities, salesStageLabels, salesStageColors, teamMembers, type SalesStage, type Organization, type ContactPerson } from "@/data/mockData";
+import { mockOrganizations, mockContacts, mockOpportunities, salesStageLabels, salesStageColors, type SalesStage, type Organization, type ContactPerson } from "@/data/mockData";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import CsvImportDialog from "./CsvImportDialog";
+
+interface PipelineViewProps {
+  teamMembers: string[];
+}
 
 const stages: SalesStage[] = ['contact', 'lead', 'opportunity', 'project'];
 
@@ -34,7 +39,7 @@ const StarRatingInput = ({ value, onChange }: { value: number; onChange: (v: num
   </div>
 );
 
-const PipelineView = () => {
+const PipelineView = ({ teamMembers }: PipelineViewProps) => {
   const [organizations, setOrganizations] = useState(mockOrganizations);
   const [contacts, setContacts] = useState(mockContacts);
   const [expandedOrg, setExpandedOrg] = useState<string | null>(null);
@@ -99,7 +104,8 @@ const PipelineView = () => {
       {/* Header */}
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold text-foreground">مسار المبيعات</h2>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
+          <CsvImportDialog onImport={(orgs) => setOrganizations(prev => [...prev, ...orgs])} />
           <div className="hidden md:flex items-center gap-2 text-xs text-muted-foreground">
             {stages.map((stage, i) => (
               <span key={stage} className="flex items-center gap-1">
