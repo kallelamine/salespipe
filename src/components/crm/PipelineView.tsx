@@ -203,16 +203,11 @@ const PipelineView = () => {
                           className="p-4 cursor-pointer"
                           onClick={() => setExpandedOrg(isExpanded ? null : org.id)}
                         >
-                          {/* Logo + Name row */}
+                          {/* Icon + Name row */}
                           <div className="flex items-start gap-3 mb-3">
-                            <Avatar className="h-10 w-10 shrink-0 border border-border">
-                              {org.logo ? (
-                                <AvatarImage src={org.logo} alt={org.name} />
-                              ) : null}
-                              <AvatarFallback className="bg-secondary text-foreground text-xs font-bold">
-                                {org.name.slice(0, 2)}
-                              </AvatarFallback>
-                            </Avatar>
+                            <div className="h-9 w-9 shrink-0 rounded-lg bg-secondary flex items-center justify-center border border-border">
+                              <Building2 className="w-4 h-4 text-muted-foreground" />
+                            </div>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center justify-between">
                                 <h3 className="text-sm font-bold text-foreground truncate">{org.name}</h3>
