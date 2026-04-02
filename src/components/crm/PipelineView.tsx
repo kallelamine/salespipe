@@ -42,13 +42,14 @@ const PipelineView = () => {
   const [showAddContact, setShowAddContact] = useState<string | null>(null);
   const [editingAction, setEditingAction] = useState<string | null>(null);
   const [editActionValue, setEditActionValue] = useState('');
+  const [editActionOwner, setEditActionOwner] = useState('');
 
   // Form state for new org
   const [newOrg, setNewOrg] = useState({ name: '', sector: '', stage: 'contact' as SalesStage, seriousness: 3, notes: '', nextAction: '', actionOwner: teamMembers[0] });
   const [newContact, setNewContact] = useState({ name: '', role: '', email: '', phone: '', assignedTo: teamMembers[0] });
 
   const handleSaveNextAction = (orgId: string) => {
-    setOrganizations(prev => prev.map(o => o.id === orgId ? { ...o, nextAction: editActionValue } : o));
+    setOrganizations(prev => prev.map(o => o.id === orgId ? { ...o, nextAction: editActionValue, actionOwner: editActionOwner } : o));
     setEditingAction(null);
   };
 
@@ -268,26 +269,45 @@ const PipelineView = () => {
                                   {/* Next Best Action */}
                                   <div className="bg-secondary/40 rounded-md p-2">
                                     {editingAction === org.id ? (
-                                      <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
-                                        <Input
-                                          value={editActionValue}
-                                          onChange={e => setEditActionValue(e.target.value)}
-                                          placeholder="الخطوة القادمة..."
-                                          className="h-7 text-xs bg-background border-border"
-                                          autoFocus
-                                          onKeyDown={e => e.key === 'Enter' && handleSaveNextAction(org.id)}
-                                        />
-                                        <button onClick={() => handleSaveNextAction(org.id)} className="p-1 rounded bg-success/20 hover:bg-success/30 shrink-0">
-                                          <CheckIcon className="w-3 h-3 text-success" />
-                                        </button>
-                                        <button onClick={() => setEditingAction(null)} className="p-1 rounded bg-secondary hover:bg-destructive/20 shrink-0">
-                                          <X className="w-3 h-3 text-muted-foreground" />
-                                        </button>
+                                      <div className="space-y-2" onClick={e => e.stopPropagation()}>
+                                        <div className="flex items-center gap-1">
+                                          <Input
+                                            value={editActionValue}
+                                            onChange={e => setEditActionValue(e.target.value)}
+                                            placeholder="الخطوة القادمة..."
+                                            className="h-7 text-xs bg-background border-border"
+                                            autoFocus
+                                            onKeyDown={e => e.key === 'Enter' && handleSaveNextAction(org.id)}
+                                          />
+                                          <button onClick={() => handleSaveNextAction(org.id)} className="p-1 rounded bg-success/20 hover:bg-success/30 shrink-0">
+                                            <CheckIcon className="w-3 h-3 text-success" />
+                                          </button>
+                                          <button onClick={() => setEditingAction(null)} className="p-1 rounded bg-secondary hover:bg-destructive/20 shrink-0">
+                                            <X className="w-3 h-3 text-muted-foreground" />
+                                          </button>
+                                        </div>
+                                        <div className="flex items-center gap-1 flex-wrap">
+                                          <UserCircle className="w-3 h-3 text-muted-foreground shrink-0" />
+                                          {teamMembers.map(member => (
+                                            <button
+                                              key={member}
+                                              type="button"
+                                              onClick={() => setEditActionOwner(member)}
+                                              className={`px-2 py-0.5 text-[10px] rounded-md border transition-colors ${
+                                                editActionOwner === member
+                                                  ? 'border-primary bg-primary/10 text-primary'
+                                                  : 'border-border text-muted-foreground hover:border-primary/30'
+                                              }`}
+                                            >
+                                              {member}
+                                            </button>
+                                          ))}
+                                        </div>
                                       </div>
                                     ) : (
                                       <div
                                         className="flex items-center gap-1.5 group/action cursor-pointer"
-                                        onClick={e => { e.stopPropagation(); setEditingAction(org.id); setEditActionValue(org.nextAction || ''); }}
+                                        onClick={e => { e.stopPropagation(); setEditingAction(org.id); setEditActionValue(org.nextAction || ''); setEditActionOwner(org.actionOwner || teamMembers[0]); }}
                                       >
                                         <Zap className="w-3.5 h-3.5 text-warning shrink-0" />
                                         <div className="flex-1 min-w-0">
