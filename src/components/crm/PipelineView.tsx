@@ -60,6 +60,25 @@ const PipelineView = ({ teamMembers }: PipelineViewProps) => {
     setEditingAction(null);
   };
 
+  const handleRecordOutcome = (orgId: string, outcome: 'success' | 'lost') => {
+    const org = organizations.find(o => o.id === orgId);
+    if (!org) return;
+    
+    if (outcome === 'success') {
+      // Move to next stage
+      const currentIdx = stages.indexOf(org.stage);
+      const nextStage = currentIdx < stages.length - 1 ? stages[currentIdx + 1] : org.stage;
+      setOrganizations(prev => prev.map(o => o.id === orgId ? { ...o, stage: nextStage, nextAction: '', actionOwner: '' } : o));
+      setRecordingOutcome(null);
+    } else {
+      if (!lossReason.trim()) return;
+      // Mark as lost - remove from pipeline
+      setOrganizations(prev => prev.filter(o => o.id !== orgId));
+      setRecordingOutcome(null);
+      setLossReason('');
+    }
+  };
+
   const handleDragEnd = (result: DropResult) => {
     const { draggableId, destination } = result;
     if (!destination) return;
