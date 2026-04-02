@@ -83,13 +83,13 @@ export const teamMembers = [
 
 // ===== بيانات تجريبية =====
 export const mockOrganizations: Organization[] = [
-  { id: 'org1', name: 'شركة التقنية المتقدمة', sector: 'تقنية المعلومات', stage: 'contact', seriousness: 2, createdAt: '2026-03-15', notes: 'تم التواصل المبدئي عبر معرض جيتكس', nextAction: 'جدولة اجتماع تعريفي مع مدير تقنية المعلومات' },
-  { id: 'org2', name: 'مجموعة الابتكار', sector: 'الابتكار والتحول الرقمي', stage: 'lead', seriousness: 4, createdAt: '2026-02-20', notes: 'مهتمون بعرض تقديمي عن خدمات السحابة', nextAction: 'تجهيز عرض تقديمي مخصص عن حلول السحابة' },
-  { id: 'org3', name: 'حلول رقمية', sector: 'البرمجيات', stage: 'opportunity', seriousness: 5, createdAt: '2026-01-10', notes: 'فرصة قوية - طلبوا عرض سعر', nextAction: 'إرسال عرض سعر نهائي والتفاوض على الشروط' },
-  { id: 'org4', name: 'مؤسسة النمو', sector: 'الاستشارات', stage: 'project', seriousness: 5, createdAt: '2025-12-05', notes: 'تم توقيع العقد', nextAction: 'بدء تنفيذ المرحلة الأولى من المشروع' },
-  { id: 'org5', name: 'شركة البيانات الذكية', sector: 'تحليل البيانات', stage: 'lead', seriousness: 3, createdAt: '2026-03-01', nextAction: 'إرسال دراسة حالة مشابهة لقطاعهم' },
-  { id: 'org6', name: 'تقنيات السحاب', sector: 'الحوسبة السحابية', stage: 'opportunity', seriousness: 4, createdAt: '2026-02-15', nextAction: 'عقد اجتماع تقني مع فريق التطوير' },
-  { id: 'org7', name: 'شركة الأمان الرقمي', sector: 'الأمن السيبراني', stage: 'contact', seriousness: 1, createdAt: '2026-03-28', nextAction: 'إرسال بريد تعريفي بالخدمات' },
+  { id: 'org1', name: 'شركة التقنية المتقدمة', sector: 'تقنية المعلومات', stage: 'contact', seriousness: 2, createdAt: '2026-03-15', notes: 'تم التواصل المبدئي عبر معرض جيتكس', nextAction: 'جدولة اجتماع تعريفي مع مدير تقنية المعلومات', logo: '' },
+  { id: 'org2', name: 'مجموعة الابتكار', sector: 'الابتكار والتحول الرقمي', stage: 'lead', seriousness: 4, createdAt: '2026-02-20', notes: 'مهتمون بعرض تقديمي عن خدمات السحابة', nextAction: 'تجهيز عرض تقديمي مخصص عن حلول السحابة', logo: '' },
+  { id: 'org3', name: 'حلول رقمية', sector: 'البرمجيات', stage: 'opportunity', seriousness: 5, createdAt: '2026-01-10', notes: 'فرصة قوية - طلبوا عرض سعر', nextAction: 'إرسال عرض سعر نهائي والتفاوض على الشروط', logo: '' },
+  { id: 'org4', name: 'مؤسسة النمو', sector: 'الاستشارات', stage: 'project', seriousness: 5, createdAt: '2025-12-05', notes: 'تم توقيع العقد', nextAction: 'بدء تنفيذ المرحلة الأولى من المشروع', logo: '' },
+  { id: 'org5', name: 'شركة البيانات الذكية', sector: 'تحليل البيانات', stage: 'lead', seriousness: 3, createdAt: '2026-03-01', nextAction: 'إرسال دراسة حالة مشابهة لقطاعهم', logo: '' },
+  { id: 'org6', name: 'تقنيات السحاب', sector: 'الحوسبة السحابية', stage: 'opportunity', seriousness: 4, createdAt: '2026-02-15', nextAction: 'عقد اجتماع تقني مع فريق التطوير', logo: '' },
+  { id: 'org7', name: 'شركة الأمان الرقمي', sector: 'الأمن السيبراني', stage: 'contact', seriousness: 1, createdAt: '2026-03-28', nextAction: 'إرسال بريد تعريفي بالخدمات', logo: '' },
 ];
 
 export const mockContacts: ContactPerson[] = [
