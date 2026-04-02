@@ -62,6 +62,22 @@ export interface Activity {
   priority: 'high' | 'medium' | 'low';
 }
 
+// ===== سجل الإجراءات =====
+export type ActionOutcome = 'success' | 'lost' | 'pending';
+
+export interface ActionLog {
+  id: string;
+  organizationId: string;
+  action: string;
+  owner: string;
+  outcome: ActionOutcome;
+  fromStage: SalesStage;
+  toStage?: SalesStage; // if progressed
+  date: string;
+  durationDays?: number; // days since previous action
+  lossReason?: string;
+}
+
 // ===== الشريك =====
 export interface Partner {
   id: string;
