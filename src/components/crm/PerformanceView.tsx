@@ -30,6 +30,7 @@ const PerformanceView = () => {
   // Losses by stage
   const lossByStage = (['contact', 'lead', 'opportunity'] as SalesStage[]).map(stage => ({
     stage,
+    label: salesStageLabels[stage],
     count: lostLogs.filter(l => l.fromStage === stage).length,
   }));
 
