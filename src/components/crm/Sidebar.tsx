@@ -10,6 +10,7 @@ const navItems = [
   { id: 'pipeline', label: 'مسار المبيعات', icon: TrendingUp },
   { id: 'partners', label: 'الشركاء', icon: Handshake },
   { id: 'activities', label: 'المهام والأنشطة', icon: ListTodo },
+  { id: 'performance', label: 'تقارير الأداء', icon: BarChart3 },
   { id: 'team', label: 'إدارة الفريق', icon: Settings },
 ];
 

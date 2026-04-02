@@ -18,6 +18,7 @@ const Index = () => {
       case 'pipeline': return <PipelineView teamMembers={teamMembers} />;
       case 'partners': return <PartnersView />;
       case 'activities': return <ActivitiesView />;
+      case 'performance': return <PerformanceView />;
       case 'team': return <TeamManagement members={teamMembers} onUpdate={setTeamMembers} />;
       default: return <Dashboard />;
     }
