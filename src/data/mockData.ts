@@ -62,6 +62,22 @@ export interface Activity {
   priority: 'high' | 'medium' | 'low';
 }
 
+// ===== سجل الإجراءات =====
+export type ActionOutcome = 'success' | 'lost' | 'pending';
+
+export interface ActionLog {
+  id: string;
+  organizationId: string;
+  action: string;
+  owner: string;
+  outcome: ActionOutcome;
+  fromStage: SalesStage;
+  toStage?: SalesStage; // if progressed
+  date: string;
+  durationDays?: number; // days since previous action
+  lossReason?: string;
+}
+
 // ===== الشريك =====
 export interface Partner {
   id: string;
@@ -118,6 +134,28 @@ export const mockActivities: Activity[] = [
   { id: 'a4', organizationId: 'org4', title: 'مراجعة عقد مؤسسة النمو', type: 'task', dueDate: '2026-04-05', completed: false, priority: 'medium' },
   { id: 'a5', organizationId: 'org5', title: 'متابعة مع البيانات الذكية', type: 'followup', dueDate: '2026-04-02', completed: true, priority: 'low' },
 ];
+
+export const mockActionLogs: ActionLog[] = [
+  { id: 'al1', organizationId: 'org4', action: 'اجتماع تعريفي مع الإدارة', owner: 'أنا', outcome: 'success', fromStage: 'contact', toStage: 'lead', date: '2025-11-10', durationDays: 0 },
+  { id: 'al2', organizationId: 'org4', action: 'عرض تقديمي شامل عن الحلول', owner: 'سارة', outcome: 'success', fromStage: 'lead', toStage: 'opportunity', date: '2025-11-20', durationDays: 10 },
+  { id: 'al3', organizationId: 'org4', action: 'تقديم عرض سعر وتفاوض', owner: 'محمد', outcome: 'success', fromStage: 'opportunity', toStage: 'project', date: '2025-12-05', durationDays: 15 },
+  { id: 'al4', organizationId: 'org2', action: 'اتصال تعريفي أولي', owner: 'أنا', outcome: 'success', fromStage: 'contact', toStage: 'lead', date: '2026-02-20', durationDays: 0 },
+  { id: 'al5', organizationId: 'org3', action: 'عرض تقديمي مخصص', owner: 'سارة', outcome: 'success', fromStage: 'lead', toStage: 'opportunity', date: '2026-01-15', durationDays: 5 },
+  { id: 'al6', organizationId: 'org5', action: 'اتصال متابعة', owner: 'أنا', outcome: 'success', fromStage: 'contact', toStage: 'lead', date: '2026-03-01', durationDays: 0 },
+  { id: 'al7', organizationId: 'org6', action: 'عرض تقديمي عن السحابة', owner: 'سارة', outcome: 'success', fromStage: 'lead', toStage: 'opportunity', date: '2026-02-25', durationDays: 10 },
+  // Lost examples
+  { id: 'al8', organizationId: 'org-lost1', action: 'عرض تقديمي عن خدمات الأمن', owner: 'محمد', outcome: 'lost', fromStage: 'lead', date: '2026-02-10', durationDays: 14, lossReason: 'اختاروا مزود خدمة آخر بسعر أقل' },
+  { id: 'al9', organizationId: 'org-lost2', action: 'تقديم عرض سعر لمشروع ERP', owner: 'نورة', outcome: 'lost', fromStage: 'opportunity', date: '2026-03-05', durationDays: 20, lossReason: 'تجميد الميزانية من قبل الجهة' },
+  { id: 'al10', organizationId: 'org-lost3', action: 'متابعة بعد الاتصال الأول', owner: 'أنا', outcome: 'lost', fromStage: 'contact', date: '2026-03-15', durationDays: 30, lossReason: 'لا اهتمام حالياً' },
+];
+
+// أسماء الجهات المفقودة للتقارير
+export const lostOrganizations: Record<string, string> = {
+  'org-lost1': 'شركة الحلول الأمنية',
+  'org-lost2': 'مجموعة التخطيط الرقمي',
+  'org-lost3': 'مؤسسة البنية التقنية',
+};
+
 
 export const mockPartners: Partner[] = [
   { id: '1', name: 'مايكروسوفت العربية', type: 'technology', status: 'active', services: ['Azure', 'M365', 'Dynamics'], contactPerson: 'طارق الأحمد', revenue: 500000, lastContact: '2026-03-30' },
