@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Phone, Mail, ArrowLeft, Star, Plus, Users, ChevronDown, ChevronUp, X } from "lucide-react";
+import { Phone, Mail, ArrowLeft, Star, Plus, Users, ChevronDown, ChevronUp, X, Zap, Pencil, Check as CheckIcon } from "lucide-react";
 import { mockOrganizations, mockContacts, mockOpportunities, salesStageLabels, salesStageColors, teamMembers, type SalesStage, type Organization, type ContactPerson } from "@/data/mockData";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -38,10 +38,17 @@ const PipelineView = () => {
   const [expandedOrg, setExpandedOrg] = useState<string | null>(null);
   const [showAddOrg, setShowAddOrg] = useState(false);
   const [showAddContact, setShowAddContact] = useState<string | null>(null);
+  const [editingAction, setEditingAction] = useState<string | null>(null);
+  const [editActionValue, setEditActionValue] = useState('');
 
   // Form state for new org
-  const [newOrg, setNewOrg] = useState({ name: '', sector: '', stage: 'contact' as SalesStage, seriousness: 3, notes: '' });
+  const [newOrg, setNewOrg] = useState({ name: '', sector: '', stage: 'contact' as SalesStage, seriousness: 3, notes: '', nextAction: '' });
   const [newContact, setNewContact] = useState({ name: '', role: '', email: '', phone: '', assignedTo: teamMembers[0] });
+
+  const handleSaveNextAction = (orgId: string) => {
+    setOrganizations(prev => prev.map(o => o.id === orgId ? { ...o, nextAction: editActionValue } : o));
+    setEditingAction(null);
+  };
 
   const handleAddOrg = () => {
     if (!newOrg.name.trim()) return;
@@ -52,10 +59,11 @@ const PipelineView = () => {
       stage: newOrg.stage,
       seriousness: newOrg.seriousness,
       notes: newOrg.notes,
+      nextAction: newOrg.nextAction,
       createdAt: new Date().toISOString().split('T')[0],
     };
     setOrganizations(prev => [...prev, org]);
-    setNewOrg({ name: '', sector: '', stage: 'contact', seriousness: 3, notes: '' });
+    setNewOrg({ name: '', sector: '', stage: 'contact', seriousness: 3, notes: '', nextAction: '' });
     setShowAddOrg(false);
   };
 
@@ -137,6 +145,10 @@ const PipelineView = () => {
                   <label className="text-sm text-muted-foreground mb-1 block">ملاحظات</label>
                   <Input value={newOrg.notes} onChange={e => setNewOrg(p => ({ ...p, notes: e.target.value }))} placeholder="ملاحظات اختيارية..." />
                 </div>
+                <div>
+                  <label className="text-sm text-muted-foreground mb-1 block">الخطوة القادمة (Next Best Action)</label>
+                  <Input value={newOrg.nextAction} onChange={e => setNewOrg(p => ({ ...p, nextAction: e.target.value }))} placeholder="مثال: جدولة اجتماع تعريفي" />
+                </div>
                 <Button onClick={handleAddOrg} className="w-full gradient-gold text-primary-foreground shadow-gold">إضافة</Button>
               </div>
             </DialogContent>
@@ -208,6 +220,39 @@ const PipelineView = () => {
                               )}
                             </div>
                           </div>
+
+                          {/* Next Best Action */}
+                          {editingAction === org.id ? (
+                            <div className="mt-2 flex items-center gap-1" onClick={e => e.stopPropagation()}>
+                              <Input
+                                value={editActionValue}
+                                onChange={e => setEditActionValue(e.target.value)}
+                                placeholder="الخطوة القادمة..."
+                                className="h-7 text-xs bg-secondary border-border"
+                                autoFocus
+                                onKeyDown={e => e.key === 'Enter' && handleSaveNextAction(org.id)}
+                              />
+                              <button onClick={() => handleSaveNextAction(org.id)} className="p-1 rounded bg-success/20 hover:bg-success/30 shrink-0">
+                                <CheckIcon className="w-3 h-3 text-success" />
+                              </button>
+                              <button onClick={() => setEditingAction(null)} className="p-1 rounded bg-secondary hover:bg-destructive/20 shrink-0">
+                                <X className="w-3 h-3 text-muted-foreground" />
+                              </button>
+                            </div>
+                          ) : (
+                            <div
+                              className="mt-2 flex items-center gap-1.5 group/action cursor-pointer"
+                              onClick={e => { e.stopPropagation(); setEditingAction(org.id); setEditActionValue(org.nextAction || ''); }}
+                            >
+                              <Zap className="w-3 h-3 text-warning shrink-0" />
+                              {org.nextAction ? (
+                                <p className="text-[11px] text-warning/90 leading-tight flex-1">{org.nextAction}</p>
+                              ) : (
+                                <p className="text-[11px] text-muted-foreground/50 italic flex-1">أضف الخطوة القادمة...</p>
+                              )}
+                              <Pencil className="w-3 h-3 text-muted-foreground/0 group-hover/action:text-muted-foreground/50 transition-colors shrink-0" />
+                            </div>
+                          )}
                         </div>
 
                         {/* Expanded: Contacts + Opportunities */}
