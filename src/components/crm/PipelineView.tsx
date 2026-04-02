@@ -147,18 +147,7 @@ const PipelineView = ({ teamMembers }: PipelineViewProps) => {
     setShowAddContact(null);
   };
 
-  const handleCsvImport = (orgs: any[]) => {
-    orgs.forEach(org => {
-      createOrg.mutate({
-        name: org.name,
-        sector: org.sector || '',
-        stage: org.stage || 'contact',
-        seriousness: org.seriousness || 3,
-        notes: org.notes || '',
-        next_action: org.nextAction || '',
-      });
-    });
-  };
+
 
   return (
     <div className="space-y-6">
