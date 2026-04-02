@@ -214,6 +214,7 @@ const PipelineView = () => {
                                   {totalValue.toLocaleString()} ر.س
                                 </span>
                               )}
+                            </div>
                           </div>
 
                           {/* Next Best Action */}
