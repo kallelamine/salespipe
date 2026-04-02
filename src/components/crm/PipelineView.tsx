@@ -151,6 +151,25 @@ const PipelineView = () => {
                   <label className="text-sm text-muted-foreground mb-1 block">الخطوة القادمة (Next Best Action)</label>
                   <Input value={newOrg.nextAction} onChange={e => setNewOrg(p => ({ ...p, nextAction: e.target.value }))} placeholder="مثال: جدولة اجتماع تعريفي" />
                 </div>
+                <div>
+                  <label className="text-sm text-muted-foreground mb-1 block">المسؤول عن الخطوة القادمة</label>
+                  <div className="flex gap-2 flex-wrap">
+                    {teamMembers.map(member => (
+                      <button
+                        key={member}
+                        type="button"
+                        onClick={() => setNewOrg(p => ({ ...p, actionOwner: member }))}
+                        className={`px-3 py-1.5 text-xs rounded-lg border transition-colors ${
+                          newOrg.actionOwner === member
+                            ? 'border-primary bg-primary/10 text-primary'
+                            : 'border-border text-muted-foreground hover:border-primary/30'
+                        }`}
+                      >
+                        {member}
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 <Button onClick={handleAddOrg} className="w-full gradient-gold text-primary-foreground shadow-gold">إضافة</Button>
               </div>
             </DialogContent>
