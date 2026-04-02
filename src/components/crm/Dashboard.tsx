@@ -15,7 +15,7 @@ const Dashboard = () => {
     <div className="space-y-6">
       <div>
         <h2 className="text-xl font-bold text-foreground">مرحباً بك 👋</h2>
-        <p className="text-sm text-muted-foreground mt-1">لوحة تحكم تطوير الأعمال - التحول المبتكر</p>
+        <p className="text-sm text-muted-foreground mt-1">Innvotra Salespipe — لوحة تحكم المبيعات وتطوير الأعمال</p>
       </div>
 
       <StatsCards />

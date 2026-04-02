@@ -1,6 +1,8 @@
-# Growth Catalyst Hub
+# Innvotra — Salespipe
 
-A **React + TypeScript** web app for CRM-style workflows: organizations, contacts, opportunities, activities, action logs, partners, and team members. The UI supports **Arabic (RTL)** on key screens (e.g. authentication). Data and auth are backed by **[Supabase](https://supabase.com/)** (PostgreSQL, Auth, Row Level Security). There is **no custom backend** in this repository—the browser talks to Supabase directly.
+**Innvotra Salespipe** is a **React + TypeScript** web app for CRM-style workflows: organizations, contacts, opportunities, activities, action logs, partners, and team members. The UI is **Arabic-first (RTL)**. Data and auth are backed by **[Supabase](https://supabase.com/)** (PostgreSQL, Auth, Row Level Security). There is **no custom backend** in this repository—the browser talks to Supabase directly.
+
+**Branding:** in-app and social preview logo — `public/logoinnvotra.png`; favicon — `public/favicon.ico`.
 
 ---
 

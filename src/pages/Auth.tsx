@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Mail, Lock, User, LogIn } from "lucide-react";
+import { BrandLogo } from "@/components/BrandLogo";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect } from "react";
 
@@ -82,6 +83,11 @@ const Auth = () => {
     <div className="min-h-screen flex items-center justify-center bg-background p-4" dir="rtl">
       <Card className="w-full max-w-md border-border/50">
         <CardHeader className="text-center space-y-2">
+          <div className="flex justify-center mb-2">
+            <div className="w-14 h-14 rounded-xl bg-card border border-border flex items-center justify-center overflow-hidden">
+              <BrandLogo className="w-11 h-11 object-contain" />
+            </div>
+          </div>
           <CardTitle className="text-2xl font-bold text-foreground">
             {isLogin ? "تسجيل الدخول" : "إنشاء حساب جديد"}
           </CardTitle>

@@ -1,5 +1,6 @@
 import { LayoutDashboard, Users, Handshake, ListTodo, TrendingUp, Settings, BarChart3, LogOut } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { BrandLogo } from "@/components/BrandLogo";
 
 interface SidebarProps {
   activeTab: string;
@@ -22,12 +23,12 @@ const CrmSidebar = ({ activeTab, onTabChange }: SidebarProps) => {
       {/* Logo */}
       <div className="p-6 border-b border-sidebar-border">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg gradient-gold flex items-center justify-center">
-            <TrendingUp className="w-5 h-5 text-primary-foreground" />
+          <div className="w-10 h-10 rounded-lg bg-card border border-border flex items-center justify-center overflow-hidden shrink-0">
+            <BrandLogo className="w-8 h-8 object-contain" />
           </div>
           <div>
-            <h1 className="text-sm font-bold text-sidebar-foreground">التحول المبتكر</h1>
-            <p className="text-xs text-muted-foreground">إدارة تطوير الأعمال</p>
+            <h1 className="text-sm font-bold text-sidebar-foreground">Innvotra</h1>
+            <p className="text-xs text-muted-foreground">Salespipe — إدارة المبيعات</p>
           </div>
         </div>
       </div>
