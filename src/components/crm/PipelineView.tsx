@@ -42,6 +42,7 @@ const PipelineView = () => {
   const [showAddContact, setShowAddContact] = useState<string | null>(null);
   const [editingAction, setEditingAction] = useState<string | null>(null);
   const [editActionValue, setEditActionValue] = useState('');
+  const [editActionOwner, setEditActionOwner] = useState('');
 
   // Form state for new org
   const [newOrg, setNewOrg] = useState({ name: '', sector: '', stage: 'contact' as SalesStage, seriousness: 3, notes: '', nextAction: '', actionOwner: teamMembers[0] });
