@@ -61,10 +61,11 @@ const PipelineView = () => {
       seriousness: newOrg.seriousness,
       notes: newOrg.notes,
       nextAction: newOrg.nextAction,
+      actionOwner: newOrg.actionOwner,
       createdAt: new Date().toISOString().split('T')[0],
     };
     setOrganizations(prev => [...prev, org]);
-    setNewOrg({ name: '', sector: '', stage: 'contact', seriousness: 3, notes: '', nextAction: '' });
+    setNewOrg({ name: '', sector: '', stage: 'contact', seriousness: 3, notes: '', nextAction: '', actionOwner: teamMembers[0] });
     setShowAddOrg(false);
   };
 
