@@ -16,6 +16,7 @@ const navItems = [
 ];
 
 const CrmSidebar = ({ activeTab, onTabChange }: SidebarProps) => {
+  const { user, signOut } = useAuth();
   return (
     <aside className="w-64 min-h-screen bg-sidebar border-l border-sidebar-border flex flex-col">
       {/* Logo */}
