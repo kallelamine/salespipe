@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { DragDropContext, Droppable, Draggable, type DropResult } from "@hello-pangea/dnd";
-import { Phone, Mail, ArrowLeft, Star, Plus, Users, ChevronDown, ChevronUp, X, Zap, Pencil, Check as CheckIcon, Building2, UserCircle, GripVertical, CheckCircle2, XCircle } from "lucide-react";
+import { Phone, Mail, ArrowLeft, Star, Plus, Users, ChevronDown, ChevronUp, X, Zap, Pencil, Check as CheckIcon, Building2, UserCircle, GripVertical, CheckCircle2, XCircle, LayoutGrid, List, ArrowUpDown } from "lucide-react";
 
 import { mockOrganizations, mockContacts, mockOpportunities, salesStageLabels, salesStageColors, type SalesStage, type Organization, type ContactPerson } from "@/data/mockData";
 import { Input } from "@/components/ui/input";
@@ -40,6 +40,8 @@ const StarRatingInput = ({ value, onChange }: { value: number; onChange: (v: num
 );
 
 const PipelineView = ({ teamMembers }: PipelineViewProps) => {
+  const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');
+  const [sortBy, setSortBy] = useState<'stage' | 'action' | 'owner' | 'seriousness'>('stage');
   const [organizations, setOrganizations] = useState(mockOrganizations);
   const [contacts, setContacts] = useState(mockContacts);
   const [expandedOrg, setExpandedOrg] = useState<string | null>(null);
@@ -124,7 +126,25 @@ const PipelineView = ({ teamMembers }: PipelineViewProps) => {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold text-foreground">مسار المبيعات</h2>
+        <div className="flex items-center gap-3">
+          <h2 className="text-xl font-bold text-foreground">مسار المبيعات</h2>
+          <div className="flex items-center bg-secondary rounded-lg p-0.5 border border-border">
+            <button
+              onClick={() => setViewMode('kanban')}
+              className={`p-1.5 rounded-md transition-colors ${viewMode === 'kanban' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+              title="عرض البطاقات"
+            >
+              <LayoutGrid className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setViewMode('list')}
+              className={`p-1.5 rounded-md transition-colors ${viewMode === 'list' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+              title="عرض القائمة"
+            >
+              <List className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
         <div className="flex items-center gap-2">
           <CsvImportDialog onImport={(orgs) => setOrganizations(prev => [...prev, ...orgs])} />
           <div className="hidden md:flex items-center gap-2 text-xs text-muted-foreground">
@@ -213,6 +233,8 @@ const PipelineView = ({ teamMembers }: PipelineViewProps) => {
         </div>
       </div>
 
+      {viewMode === 'kanban' ? (
+      <>
       {/* Kanban Board */}
       <DragDropContext onDragEnd={handleDragEnd}>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -459,6 +481,84 @@ const PipelineView = ({ teamMembers }: PipelineViewProps) => {
           })}
         </div>
       </DragDropContext>
+      </>
+      ) : (
+        /* List View */
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="gradient-card border border-border rounded-xl shadow-card overflow-hidden">
+          {/* Sort Controls */}
+          <div className="flex items-center gap-2 p-4 border-b border-border bg-secondary/30">
+            <ArrowUpDown className="w-4 h-4 text-muted-foreground" />
+            <span className="text-xs text-muted-foreground">ترتيب حسب:</span>
+            {([
+              { key: 'stage', label: 'المرحلة' },
+              { key: 'action', label: 'الخطوة القادمة' },
+              { key: 'owner', label: 'الموظف' },
+              { key: 'seriousness', label: 'الجدية' },
+            ] as { key: typeof sortBy; label: string }[]).map(opt => (
+              <button
+                key={opt.key}
+                onClick={() => setSortBy(opt.key)}
+                className={`px-3 py-1 text-xs rounded-lg border transition-colors ${
+                  sortBy === opt.key
+                    ? 'border-primary bg-primary/10 text-primary'
+                    : 'border-border text-muted-foreground hover:border-primary/30'
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Table Header */}
+          <div className="grid grid-cols-[2fr_1fr_2fr_1fr_1fr] gap-2 px-4 py-2.5 border-b border-border text-xs font-bold text-muted-foreground bg-secondary/20">
+            <span>الجهة</span>
+            <span>المرحلة</span>
+            <span>الخطوة القادمة</span>
+            <span>المسؤول</span>
+            <span>الجدية</span>
+          </div>
+
+          {/* Rows */}
+          <div className="divide-y divide-border">
+            {[...organizations]
+              .sort((a, b) => {
+                if (sortBy === 'stage') return stages.indexOf(a.stage) - stages.indexOf(b.stage);
+                if (sortBy === 'action') return (a.nextAction || '').localeCompare(b.nextAction || '');
+                if (sortBy === 'owner') return (a.actionOwner || '').localeCompare(b.actionOwner || '');
+                if (sortBy === 'seriousness') return b.seriousness - a.seriousness;
+                return 0;
+              })
+              .map(org => (
+                <motion.div
+                  key={org.id}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="grid grid-cols-[2fr_1fr_2fr_1fr_1fr] gap-2 px-4 py-3 items-center hover:bg-secondary/20 transition-colors"
+                >
+                  <div>
+                    <p className="text-sm font-medium text-foreground">{org.name}</p>
+                    <p className="text-[10px] text-muted-foreground">{org.sector}</p>
+                  </div>
+                  <div>
+                    <span className={`inline-flex items-center gap-1.5 px-2 py-1 text-[10px] rounded-full font-medium ${salesStageColors[org.stage]} bg-secondary/60`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${salesStageColors[org.stage]}`} />
+                      {salesStageLabels[org.stage]}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Zap className="w-3 h-3 text-warning shrink-0" />
+                    <span className="text-xs text-foreground/80 truncate">{org.nextAction || <span className="text-muted-foreground/50 italic">—</span>}</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <UserCircle className="w-3 h-3 text-muted-foreground" />
+                    <span className="text-xs text-foreground">{org.actionOwner || '—'}</span>
+                  </div>
+                  <StarRating rating={org.seriousness} />
+                </motion.div>
+              ))}
+          </div>
+        </motion.div>
+      )}
 
       {/* Add Contact Dialog */}
       <Dialog open={!!showAddContact} onOpenChange={() => setShowAddContact(null)}>
