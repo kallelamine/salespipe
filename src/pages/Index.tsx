@@ -5,6 +5,7 @@ import PipelineView from "@/components/crm/PipelineView";
 import PartnersView from "@/components/crm/PartnersView";
 import ActivitiesView from "@/components/crm/ActivitiesView";
 import TeamManagement from "@/components/crm/TeamManagement";
+import PerformanceView from "@/components/crm/PerformanceView";
 import { teamMembers as defaultTeamMembers } from "@/data/mockData";
 
 const Index = () => {
