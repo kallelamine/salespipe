@@ -1,4 +1,5 @@
-import { LayoutDashboard, Users, Handshake, ListTodo, TrendingUp, Settings, BarChart3 } from "lucide-react";
+import { LayoutDashboard, Users, Handshake, ListTodo, TrendingUp, Settings, BarChart3, LogOut } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface SidebarProps {
   activeTab: string;
