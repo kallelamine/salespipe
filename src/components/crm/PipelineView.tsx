@@ -52,6 +52,13 @@ const PipelineView = () => {
     setEditingAction(null);
   };
 
+  const handleDragEnd = (result: DropResult) => {
+    const { draggableId, destination } = result;
+    if (!destination) return;
+    const newStage = destination.droppableId as SalesStage;
+    setOrganizations(prev => prev.map(o => o.id === draggableId ? { ...o, stage: newStage } : o));
+  };
+
   const handleAddOrg = () => {
     if (!newOrg.name.trim()) return;
     const org: Organization = {
