@@ -39,7 +39,7 @@ const StarRatingInput = ({ value, onChange }: { value: number; onChange: (v: num
   </div>
 );
 
-const PipelineView = () => {
+const PipelineView = ({ teamMembers }: PipelineViewProps) => {
   const [organizations, setOrganizations] = useState(mockOrganizations);
   const [contacts, setContacts] = useState(mockContacts);
   const [expandedOrg, setExpandedOrg] = useState<string | null>(null);
