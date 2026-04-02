@@ -42,8 +42,13 @@ const PipelineView = () => {
   const [editActionValue, setEditActionValue] = useState('');
 
   // Form state for new org
-  const [newOrg, setNewOrg] = useState({ name: '', sector: '', stage: 'contact' as SalesStage, seriousness: 3, notes: '' });
+  const [newOrg, setNewOrg] = useState({ name: '', sector: '', stage: 'contact' as SalesStage, seriousness: 3, notes: '', nextAction: '' });
   const [newContact, setNewContact] = useState({ name: '', role: '', email: '', phone: '', assignedTo: teamMembers[0] });
+
+  const handleSaveNextAction = (orgId: string) => {
+    setOrganizations(prev => prev.map(o => o.id === orgId ? { ...o, nextAction: editActionValue } : o));
+    setEditingAction(null);
+  };
 
   const handleAddOrg = () => {
     if (!newOrg.name.trim()) return;
