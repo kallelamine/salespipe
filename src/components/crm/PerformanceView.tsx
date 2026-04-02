@@ -1,7 +1,10 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { TrendingDown, TrendingUp, Clock, BarChart3, UserCircle, AlertTriangle, CheckCircle2, XCircle, Filter } from "lucide-react";
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { mockActionLogs, mockOrganizations, lostOrganizations, salesStageLabels, salesStageColors, type SalesStage, type ActionLog } from "@/data/mockData";
+
+const PIE_COLORS = ['#f97316', '#ef4444', '#eab308'];
 
 const PerformanceView = () => {
   const [filterOwner, setFilterOwner] = useState<string | null>(null);
@@ -27,6 +30,7 @@ const PerformanceView = () => {
   // Losses by stage
   const lossByStage = (['contact', 'lead', 'opportunity'] as SalesStage[]).map(stage => ({
     stage,
+    label: salesStageLabels[stage],
     count: lostLogs.filter(l => l.fromStage === stage).length,
   }));
 
@@ -101,7 +105,7 @@ const PerformanceView = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Losses by Stage */}
+        {/* Pie Chart - Losses by Stage */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -112,26 +116,39 @@ const PerformanceView = () => {
             <AlertTriangle className="w-4 h-4 text-destructive" />
             <h3 className="text-sm font-bold text-foreground">الخسائر حسب المرحلة</h3>
           </div>
-          <div className="space-y-3">
-            {lossByStage.map(item => (
-              <div key={item.stage} className="flex items-center gap-3">
-                <span className={`w-3 h-3 rounded-full ${salesStageColors[item.stage]}`} />
-                <span className="text-sm text-foreground flex-1">{salesStageLabels[item.stage]}</span>
-                <div className="flex items-center gap-2">
-                  <div className="w-24 h-2 bg-secondary rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-destructive rounded-full transition-all"
-                      style={{ width: `${lostLogs.length > 0 ? (item.count / lostLogs.length) * 100 : 0}%` }}
-                    />
-                  </div>
-                  <span className="text-sm font-bold text-foreground w-6 text-left">{item.count}</span>
-                </div>
-              </div>
-            ))}
-          </div>
+          {lostLogs.length > 0 ? (
+            <ResponsiveContainer width="100%" height={220}>
+              <PieChart>
+                <Pie
+                  data={lossByStage.filter(i => i.count > 0)}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={50}
+                  outerRadius={80}
+                  dataKey="count"
+                  nameKey="label"
+                  label={({ label, count }) => `${label} (${count})`}
+                  labelLine={false}
+                >
+                  {lossByStage.filter(i => i.count > 0).map((entry, idx) => (
+                    <Cell key={entry.stage} fill={PIE_COLORS[idx % PIE_COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px', fontSize: '12px', direction: 'rtl' }}
+                  formatter={(value: number, name: string) => [`${value} خسارة`, name]}
+                />
+                <Legend
+                  formatter={(value) => <span style={{ color: 'hsl(var(--foreground))', fontSize: '12px' }}>{value}</span>}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          ) : (
+            <p className="text-sm text-muted-foreground text-center py-10">لا توجد خسائر</p>
+          )}
         </motion.div>
 
-        {/* Team Performance */}
+        {/* Bar Chart - Team Performance */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -142,30 +159,19 @@ const PerformanceView = () => {
             <UserCircle className="w-4 h-4 text-primary" />
             <h3 className="text-sm font-bold text-foreground">أداء الفريق</h3>
           </div>
-          <div className="space-y-3">
-            {teamStats.map(member => (
-              <div key={member.owner} className="bg-secondary/40 rounded-lg p-3">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-foreground">{member.owner}</span>
-                  <span className="text-xs text-muted-foreground">{member.total} إجراء</span>
-                </div>
-                <div className="flex items-center gap-4 text-xs">
-                  <span className="flex items-center gap-1 text-success">
-                    <CheckCircle2 className="w-3 h-3" /> {member.wins} نجاح
-                  </span>
-                  <span className="flex items-center gap-1 text-destructive">
-                    <XCircle className="w-3 h-3" /> {member.losses} خسارة
-                  </span>
-                  <span className="text-muted-foreground">
-                    {member.rate}% تحويل
-                  </span>
-                  <span className="text-warning">
-                    ~{member.avgDays} يوم
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
+          <ResponsiveContainer width="100%" height={220}>
+            <BarChart data={teamStats} layout="vertical" margin={{ right: 60, left: 10 }}>
+              <XAxis type="number" tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 11 }} />
+              <YAxis type="category" dataKey="owner" tick={{ fill: 'hsl(var(--foreground))', fontSize: 12 }} width={80} />
+              <Tooltip
+                contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px', fontSize: '12px', direction: 'rtl' }}
+                formatter={(value: number, name: string) => [value, name === 'wins' ? 'نجاح' : 'خسارة']}
+              />
+              <Legend formatter={(value) => <span style={{ color: 'hsl(var(--foreground))', fontSize: '12px' }}>{value === 'wins' ? 'نجاح' : 'خسارة'}</span>} />
+              <Bar dataKey="wins" fill="hsl(var(--success))" radius={[0, 4, 4, 0]} barSize={14} name="wins" />
+              <Bar dataKey="losses" fill="hsl(var(--destructive))" radius={[0, 4, 4, 0]} barSize={14} name="losses" />
+            </BarChart>
+          </ResponsiveContainer>
         </motion.div>
       </div>
 
