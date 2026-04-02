@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { ExternalLink, Plus, Handshake, Building2, Phone, Mail, Star, Filter, X, ChevronDown, ChevronUp, Pencil, Check as CheckIcon, Zap, UserCircle, Upload } from "lucide-react";
-import { mockPartners, type Partner } from "@/data/mockData";
+import { ExternalLink, Plus, Handshake, Building2, Phone, Mail, Star, Filter, X, ChevronDown, ChevronUp, UserCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { usePartners, useCreatePartner } from "@/hooks/useSupabaseData";
+import type { Tables } from "@/integrations/supabase/types";
 
 const typeLabels: Record<string, string> = {
   technology: 'شريك تقني',
@@ -45,18 +46,18 @@ const partnerTypeFilterLabels: Record<string, string> = {
 };
 
 const PartnersView = () => {
-  const [partners, setPartners] = useState<Partner[]>(mockPartners);
+  const { data: partners = [] } = usePartners();
+  const createPartner = useCreatePartner();
   const [filterType, setFilterType] = useState<string>('all');
   const [expandedPartner, setExpandedPartner] = useState<string | null>(null);
   const [showAddPartner, setShowAddPartner] = useState(false);
   const [newPartner, setNewPartner] = useState({
     name: '',
-    type: 'technology' as Partner['type'],
-    status: 'prospect' as Partner['status'],
+    type: 'technology',
+    status: 'prospect',
     services: '',
     contactPerson: '',
     revenue: '',
-    notes: '',
   });
 
   const filteredPartners = filterType === 'all'
@@ -74,18 +75,16 @@ const PartnersView = () => {
 
   const handleAddPartner = () => {
     if (!newPartner.name.trim()) return;
-    const partner: Partner = {
-      id: `p${Date.now()}`,
+    createPartner.mutate({
       name: newPartner.name,
       type: newPartner.type,
       status: newPartner.status,
       services: newPartner.services.split('،').map(s => s.trim()).filter(Boolean),
-      contactPerson: newPartner.contactPerson,
-      revenue: newPartner.revenue ? parseInt(newPartner.revenue) : undefined,
-      lastContact: new Date().toISOString().split('T')[0],
-    };
-    setPartners(prev => [...prev, partner]);
-    setNewPartner({ name: '', type: 'technology', status: 'prospect', services: '', contactPerson: '', revenue: '', notes: '' });
+      contact_person: newPartner.contactPerson,
+      revenue: newPartner.revenue ? parseInt(newPartner.revenue) : 0,
+      last_contact: new Date().toISOString().split('T')[0],
+    });
+    setNewPartner({ name: '', type: 'technology', status: 'prospect', services: '', contactPerson: '', revenue: '' });
     setShowAddPartner(false);
   };
 
@@ -160,7 +159,7 @@ const PartnersView = () => {
                 <label className="text-sm text-muted-foreground mb-1 block">الإيرادات المتوقعة (ر.س)</label>
                 <Input value={newPartner.revenue} onChange={e => setNewPartner(p => ({ ...p, revenue: e.target.value }))} placeholder="اختياري" type="number" dir="ltr" />
               </div>
-              <Button onClick={handleAddPartner} className="w-full gradient-gold text-primary-foreground shadow-gold">إضافة</Button>
+              <Button onClick={handleAddPartner} className="w-full gradient-gold text-primary-foreground shadow-gold" disabled={createPartner.isPending}>إضافة</Button>
             </div>
           </DialogContent>
         </Dialog>
@@ -259,7 +258,7 @@ const PartnersView = () => {
   );
 };
 
-const PartnerCard = ({ partner, index, isExpanded, onToggle }: { partner: Partner; index: number; isExpanded: boolean; onToggle: () => void }) => (
+const PartnerCard = ({ partner, index, isExpanded, onToggle }: { partner: Tables<"partners">; index: number; isExpanded: boolean; onToggle: () => void }) => (
   <motion.div
     initial={{ opacity: 0, y: 15 }}
     animate={{ opacity: 1, y: 0 }}
@@ -267,7 +266,6 @@ const PartnerCard = ({ partner, index, isExpanded, onToggle }: { partner: Partne
     className="gradient-card border border-border rounded-xl shadow-card hover:border-primary/30 transition-colors"
   >
     <div className="p-5 cursor-pointer" onClick={onToggle}>
-      {/* Header */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-start gap-3">
           <div className="h-10 w-10 shrink-0 rounded-lg bg-secondary flex items-center justify-center border border-border text-lg">
@@ -276,7 +274,7 @@ const PartnerCard = ({ partner, index, isExpanded, onToggle }: { partner: Partne
           <div>
             <h3 className="text-sm font-bold text-foreground">{partner.name}</h3>
             <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
-              <UserCircle className="w-3 h-3" /> {partner.contactPerson}
+              <UserCircle className="w-3 h-3" /> {partner.contact_person}
             </p>
           </div>
         </div>
@@ -288,21 +286,19 @@ const PartnerCard = ({ partner, index, isExpanded, onToggle }: { partner: Partne
         </div>
       </div>
 
-      {/* Status + Revenue */}
       <div className="flex items-center justify-between mb-3">
         <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${statusColors[partner.status]}`}>
           {statusLabels[partner.status]}
         </span>
         {partner.revenue ? (
-          <span className="text-sm font-bold text-primary">{partner.revenue.toLocaleString()} ر.س</span>
+          <span className="text-sm font-bold text-primary">{Number(partner.revenue).toLocaleString()} ر.س</span>
         ) : (
           <span className="text-xs text-muted-foreground">—</span>
         )}
       </div>
 
-      {/* Services */}
       <div className="flex flex-wrap gap-1.5">
-        {partner.services.map(s => (
+        {(partner.services || []).map(s => (
           <span key={s} className="text-[11px] bg-secondary text-secondary-foreground px-2 py-0.5 rounded-md">
             {s}
           </span>
@@ -310,16 +306,15 @@ const PartnerCard = ({ partner, index, isExpanded, onToggle }: { partner: Partne
       </div>
     </div>
 
-    {/* Expanded Details */}
     {isExpanded && (
       <div className="px-5 pb-5 border-t border-border pt-3 space-y-3">
         <div className="flex items-center justify-between text-xs">
           <span className="text-muted-foreground">آخر تواصل</span>
-          <span className="text-foreground font-medium">{partner.lastContact}</span>
+          <span className="text-foreground font-medium">{partner.last_contact}</span>
         </div>
         <div className="flex items-center justify-between text-xs">
           <span className="text-muted-foreground">عدد الخدمات</span>
-          <span className="text-foreground font-medium">{partner.services.length}</span>
+          <span className="text-foreground font-medium">{(partner.services || []).length}</span>
         </div>
         <div className="flex gap-2 mt-2">
           <button className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs rounded-lg bg-secondary hover:bg-secondary/80 text-muted-foreground transition-colors">

@@ -2,26 +2,25 @@ import { useState } from "react";
 import { Plus, X, Users, UserPlus, Upload, FileSpreadsheet, AlertCircle, CheckCircle2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { useTeamMembers, useCreateTeamMember, useDeleteTeamMember } from "@/hooks/useSupabaseData";
 
-interface TeamManagementProps {
-  members: string[];
-  onUpdate: (members: string[]) => void;
-}
-
-const TeamManagement = ({ members, onUpdate }: TeamManagementProps) => {
+const TeamManagement = () => {
+  const { data: members = [] } = useTeamMembers();
+  const createMember = useCreateTeamMember();
+  const deleteMember = useDeleteTeamMember();
   const [newMember, setNewMember] = useState('');
   const [csvResult, setCsvResult] = useState<{ count: number; names: string[] } | null>(null);
   const [csvError, setCsvError] = useState('');
 
   const handleAdd = () => {
     const name = newMember.trim();
-    if (!name || members.includes(name)) return;
-    onUpdate([...members, name]);
+    if (!name || members.some(m => m.name === name)) return;
+    createMember.mutate({ name });
     setNewMember('');
   };
 
-  const handleRemove = (member: string) => {
-    onUpdate(members.filter(m => m !== member));
+  const handleRemove = (id: string) => {
+    deleteMember.mutate(id);
   };
 
   const handleCsvUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -36,16 +35,17 @@ const TeamManagement = ({ members, onUpdate }: TeamManagementProps) => {
         const text = ev.target?.result as string;
         const lines = text.split(/\r?\n/).filter(l => l.trim());
         const names: string[] = [];
+        const existingNames = members.map(m => m.name);
         for (const line of lines) {
           const cols = line.split(',').map(c => c.replace(/"/g, '').trim());
           for (const col of cols) {
-            if (col && !members.includes(col) && !names.includes(col)) {
+            if (col && !existingNames.includes(col) && !names.includes(col)) {
               names.push(col);
             }
           }
         }
         if (names.length === 0) { setCsvError('لم يتم العثور على أسماء جديدة'); return; }
-        onUpdate([...members, ...names]);
+        names.forEach(name => createMember.mutate({ name }));
         setCsvResult({ count: names.length, names });
       } catch {
         setCsvError('حدث خطأ في قراءة الملف');
@@ -74,7 +74,7 @@ const TeamManagement = ({ members, onUpdate }: TeamManagementProps) => {
             placeholder="اسم العضو..."
             onKeyDown={e => e.key === 'Enter' && handleAdd()}
           />
-          <Button onClick={handleAdd} className="gradient-gold text-primary-foreground shadow-gold shrink-0">
+          <Button onClick={handleAdd} className="gradient-gold text-primary-foreground shadow-gold shrink-0" disabled={createMember.isPending}>
             <Plus className="w-4 h-4" />
             إضافة
           </Button>
@@ -112,14 +112,17 @@ const TeamManagement = ({ members, onUpdate }: TeamManagementProps) => {
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
           {members.map(member => (
-            <div key={member} className="flex items-center justify-between bg-secondary/40 rounded-lg px-3 py-2.5">
+            <div key={member.id} className="flex items-center justify-between bg-secondary/40 rounded-lg px-3 py-2.5">
               <div className="flex items-center gap-2">
                 <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center">
-                  <span className="text-xs font-bold text-primary">{member[0]}</span>
+                  <span className="text-xs font-bold text-primary">{member.name[0]}</span>
                 </div>
-                <span className="text-sm text-foreground">{member}</span>
+                <div>
+                  <span className="text-sm text-foreground">{member.name}</span>
+                  {member.role && <p className="text-[10px] text-muted-foreground">{member.role}</p>}
+                </div>
               </div>
-              <button onClick={() => handleRemove(member)} className="p-1 rounded hover:bg-destructive/20 transition-colors">
+              <button onClick={() => handleRemove(member.id)} className="p-1 rounded hover:bg-destructive/20 transition-colors">
                 <X className="w-3.5 h-3.5 text-muted-foreground hover:text-destructive" />
               </button>
             </div>

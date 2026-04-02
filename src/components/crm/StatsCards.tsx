@@ -1,17 +1,20 @@
 import { motion } from "framer-motion";
 import { Users, Target, Briefcase, DollarSign } from "lucide-react";
-import { mockOrganizations, mockOpportunities } from "@/data/mockData";
+import { useOrganizations, useOpportunities } from "@/hooks/useSupabaseData";
 
 const StatsCards = () => {
-  const contacts = mockOrganizations.filter(o => o.stage === 'contact').length;
-  const leads = mockOrganizations.filter(o => o.stage === 'lead').length;
-  const opportunities = mockOrganizations.filter(o => o.stage === 'opportunity').length;
-  const totalRevenue = mockOpportunities.filter(o => o.status === 'won').reduce((sum, o) => sum + (o.value || 0), 0);
+  const { data: organizations = [] } = useOrganizations();
+  const { data: opportunities = [] } = useOpportunities();
+
+  const contacts = organizations.filter(o => o.stage === 'contact').length;
+  const leads = organizations.filter(o => o.stage === 'lead').length;
+  const opps = organizations.filter(o => o.stage === 'opportunity').length;
+  const totalRevenue = opportunities.filter(o => o.status === 'won').reduce((sum, o) => sum + (o.value || 0), 0);
 
   const stats = [
     { label: 'جهات الاتصال', value: contacts, icon: Users, color: 'text-info' },
     { label: 'عملاء محتملون', value: leads, icon: Target, color: 'text-warning' },
-    { label: 'فرص مفتوحة', value: opportunities, icon: Briefcase, color: 'text-primary' },
+    { label: 'فرص مفتوحة', value: opps, icon: Briefcase, color: 'text-primary' },
     { label: 'إجمالي الإيرادات', value: `${(totalRevenue / 1000).toFixed(0)}K ر.س`, icon: DollarSign, color: 'text-success' },
   ];
 

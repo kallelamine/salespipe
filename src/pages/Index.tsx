@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import CrmSidebar from "@/components/crm/Sidebar";
 import Dashboard from "@/components/crm/Dashboard";
 import PipelineView from "@/components/crm/PipelineView";
@@ -6,20 +6,22 @@ import PartnersView from "@/components/crm/PartnersView";
 import ActivitiesView from "@/components/crm/ActivitiesView";
 import TeamManagement from "@/components/crm/TeamManagement";
 import PerformanceView from "@/components/crm/PerformanceView";
-import { teamMembers as defaultTeamMembers } from "@/data/mockData";
+import { useTeamMembers } from "@/hooks/useSupabaseData";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
-  const [teamMembers, setTeamMembers] = useState(defaultTeamMembers);
+  const { data: teamMembers = [] } = useTeamMembers();
+
+  const teamMemberNames = teamMembers.map(m => m.name);
 
   const renderContent = () => {
     switch (activeTab) {
       case 'dashboard': return <Dashboard />;
-      case 'pipeline': return <PipelineView teamMembers={teamMembers} />;
+      case 'pipeline': return <PipelineView teamMembers={teamMemberNames} />;
       case 'partners': return <PartnersView />;
       case 'activities': return <ActivitiesView />;
       case 'performance': return <PerformanceView />;
-      case 'team': return <TeamManagement members={teamMembers} onUpdate={setTeamMembers} />;
+      case 'team': return <TeamManagement />;
       default: return <Dashboard />;
     }
   };
