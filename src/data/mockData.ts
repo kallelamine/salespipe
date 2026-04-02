@@ -23,6 +23,7 @@ export interface Organization {
   stage: SalesStage;
   seriousness: number; // 1-5 نجوم
   notes?: string;
+  nextAction?: string;
   createdAt: string;
 }
 
