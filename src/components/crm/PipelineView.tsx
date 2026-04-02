@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Phone, Mail, ArrowLeft, Star, Plus, Users, ChevronDown, ChevronUp, X, Zap, Pencil, Check as CheckIcon } from "lucide-react";
+import { Phone, Mail, ArrowLeft, Star, Plus, Users, ChevronDown, ChevronUp, X, Zap, Pencil, Check as CheckIcon, Building2, ImagePlus } from "lucide-react";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { mockOrganizations, mockContacts, mockOpportunities, salesStageLabels, salesStageColors, teamMembers, type SalesStage, type Organization, type ContactPerson } from "@/data/mockData";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -202,14 +203,29 @@ const PipelineView = () => {
                           className="p-4 cursor-pointer"
                           onClick={() => setExpandedOrg(isExpanded ? null : org.id)}
                         >
-                          <div className="flex items-center justify-between mb-1">
-                            <h3 className="text-sm font-bold text-foreground">{org.name}</h3>
-                            {isExpanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+                          {/* Logo + Name row */}
+                          <div className="flex items-start gap-3 mb-3">
+                            <Avatar className="h-10 w-10 shrink-0 border border-border">
+                              {org.logo ? (
+                                <AvatarImage src={org.logo} alt={org.name} />
+                              ) : null}
+                              <AvatarFallback className="bg-secondary text-foreground text-xs font-bold">
+                                {org.name.slice(0, 2)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between">
+                                <h3 className="text-sm font-bold text-foreground truncate">{org.name}</h3>
+                                {isExpanded ? <ChevronUp className="w-4 h-4 text-muted-foreground shrink-0" /> : <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" />}
+                              </div>
+                              <p className="text-xs text-muted-foreground mt-0.5">{org.sector}</p>
+                            </div>
                           </div>
-                          <p className="text-xs text-muted-foreground mb-2">{org.sector}</p>
-                          <div className="flex items-center justify-between">
+
+                          {/* Stats row */}
+                          <div className="flex items-center justify-between mb-2">
                             <StarRating rating={org.seriousness} />
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-3">
                               <span className="text-xs text-muted-foreground flex items-center gap-1">
                                 <Users className="w-3 h-3" /> {orgContacts.length}
                               </span>
@@ -222,37 +238,39 @@ const PipelineView = () => {
                           </div>
 
                           {/* Next Best Action */}
-                          {editingAction === org.id ? (
-                            <div className="mt-2 flex items-center gap-1" onClick={e => e.stopPropagation()}>
-                              <Input
-                                value={editActionValue}
-                                onChange={e => setEditActionValue(e.target.value)}
-                                placeholder="الخطوة القادمة..."
-                                className="h-7 text-xs bg-secondary border-border"
-                                autoFocus
-                                onKeyDown={e => e.key === 'Enter' && handleSaveNextAction(org.id)}
-                              />
-                              <button onClick={() => handleSaveNextAction(org.id)} className="p-1 rounded bg-success/20 hover:bg-success/30 shrink-0">
-                                <CheckIcon className="w-3 h-3 text-success" />
-                              </button>
-                              <button onClick={() => setEditingAction(null)} className="p-1 rounded bg-secondary hover:bg-destructive/20 shrink-0">
-                                <X className="w-3 h-3 text-muted-foreground" />
-                              </button>
-                            </div>
-                          ) : (
-                            <div
-                              className="mt-2 flex items-center gap-1.5 group/action cursor-pointer"
-                              onClick={e => { e.stopPropagation(); setEditingAction(org.id); setEditActionValue(org.nextAction || ''); }}
-                            >
-                              <Zap className="w-3 h-3 text-warning shrink-0" />
-                              {org.nextAction ? (
-                                <p className="text-[11px] text-warning/90 leading-tight flex-1">{org.nextAction}</p>
-                              ) : (
-                                <p className="text-[11px] text-muted-foreground/50 italic flex-1">أضف الخطوة القادمة...</p>
-                              )}
-                              <Pencil className="w-3 h-3 text-muted-foreground/0 group-hover/action:text-muted-foreground/50 transition-colors shrink-0" />
-                            </div>
-                          )}
+                          <div className="bg-secondary/40 rounded-md p-2">
+                            {editingAction === org.id ? (
+                              <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
+                                <Input
+                                  value={editActionValue}
+                                  onChange={e => setEditActionValue(e.target.value)}
+                                  placeholder="الخطوة القادمة..."
+                                  className="h-7 text-xs bg-background border-border"
+                                  autoFocus
+                                  onKeyDown={e => e.key === 'Enter' && handleSaveNextAction(org.id)}
+                                />
+                                <button onClick={() => handleSaveNextAction(org.id)} className="p-1 rounded bg-success/20 hover:bg-success/30 shrink-0">
+                                  <CheckIcon className="w-3 h-3 text-success" />
+                                </button>
+                                <button onClick={() => setEditingAction(null)} className="p-1 rounded bg-secondary hover:bg-destructive/20 shrink-0">
+                                  <X className="w-3 h-3 text-muted-foreground" />
+                                </button>
+                              </div>
+                            ) : (
+                              <div
+                                className="flex items-center gap-1.5 group/action cursor-pointer"
+                                onClick={e => { e.stopPropagation(); setEditingAction(org.id); setEditActionValue(org.nextAction || ''); }}
+                              >
+                                <Zap className="w-3.5 h-3.5 text-warning shrink-0" />
+                                {org.nextAction ? (
+                                  <p className="text-xs text-warning/90 leading-relaxed flex-1">{org.nextAction}</p>
+                                ) : (
+                                  <p className="text-xs text-muted-foreground/50 italic flex-1">أضف الخطوة القادمة...</p>
+                                )}
+                                <Pencil className="w-3 h-3 text-muted-foreground/0 group-hover/action:text-muted-foreground/50 transition-colors shrink-0" />
+                              </div>
+                            )}
+                          </div>
                         </div>
 
                         {/* Expanded: Contacts + Opportunities */}
