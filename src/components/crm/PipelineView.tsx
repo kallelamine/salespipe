@@ -269,21 +269,40 @@ const PipelineView = () => {
                                   {/* Next Best Action */}
                                   <div className="bg-secondary/40 rounded-md p-2">
                                     {editingAction === org.id ? (
-                                      <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
-                                        <Input
-                                          value={editActionValue}
-                                          onChange={e => setEditActionValue(e.target.value)}
-                                          placeholder="الخطوة القادمة..."
-                                          className="h-7 text-xs bg-background border-border"
-                                          autoFocus
-                                          onKeyDown={e => e.key === 'Enter' && handleSaveNextAction(org.id)}
-                                        />
-                                        <button onClick={() => handleSaveNextAction(org.id)} className="p-1 rounded bg-success/20 hover:bg-success/30 shrink-0">
-                                          <CheckIcon className="w-3 h-3 text-success" />
-                                        </button>
-                                        <button onClick={() => setEditingAction(null)} className="p-1 rounded bg-secondary hover:bg-destructive/20 shrink-0">
-                                          <X className="w-3 h-3 text-muted-foreground" />
-                                        </button>
+                                      <div className="space-y-2" onClick={e => e.stopPropagation()}>
+                                        <div className="flex items-center gap-1">
+                                          <Input
+                                            value={editActionValue}
+                                            onChange={e => setEditActionValue(e.target.value)}
+                                            placeholder="الخطوة القادمة..."
+                                            className="h-7 text-xs bg-background border-border"
+                                            autoFocus
+                                            onKeyDown={e => e.key === 'Enter' && handleSaveNextAction(org.id)}
+                                          />
+                                          <button onClick={() => handleSaveNextAction(org.id)} className="p-1 rounded bg-success/20 hover:bg-success/30 shrink-0">
+                                            <CheckIcon className="w-3 h-3 text-success" />
+                                          </button>
+                                          <button onClick={() => setEditingAction(null)} className="p-1 rounded bg-secondary hover:bg-destructive/20 shrink-0">
+                                            <X className="w-3 h-3 text-muted-foreground" />
+                                          </button>
+                                        </div>
+                                        <div className="flex items-center gap-1 flex-wrap">
+                                          <UserCircle className="w-3 h-3 text-muted-foreground shrink-0" />
+                                          {teamMembers.map(member => (
+                                            <button
+                                              key={member}
+                                              type="button"
+                                              onClick={() => setEditActionOwner(member)}
+                                              className={`px-2 py-0.5 text-[10px] rounded-md border transition-colors ${
+                                                editActionOwner === member
+                                                  ? 'border-primary bg-primary/10 text-primary'
+                                                  : 'border-border text-muted-foreground hover:border-primary/30'
+                                              }`}
+                                            >
+                                              {member}
+                                            </button>
+                                          ))}
+                                        </div>
                                       </div>
                                     ) : (
                                       <div
