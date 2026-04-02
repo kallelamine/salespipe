@@ -59,6 +59,7 @@ const PipelineView = () => {
       stage: newOrg.stage,
       seriousness: newOrg.seriousness,
       notes: newOrg.notes,
+      nextAction: newOrg.nextAction,
       createdAt: new Date().toISOString().split('T')[0],
     };
     setOrganizations(prev => [...prev, org]);
