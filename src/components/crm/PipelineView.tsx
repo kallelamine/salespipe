@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Phone, Mail, ArrowLeft, Star, Plus, Users, ChevronDown, ChevronUp, X, Zap, Pencil, Check as CheckIcon, Building2 } from "lucide-react";
+import { Phone, Mail, ArrowLeft, Star, Plus, Users, ChevronDown, ChevronUp, X, Zap, Pencil, Check as CheckIcon, Building2, UserCircle } from "lucide-react";
 
 import { mockOrganizations, mockContacts, mockOpportunities, salesStageLabels, salesStageColors, teamMembers, type SalesStage, type Organization, type ContactPerson } from "@/data/mockData";
 import { Input } from "@/components/ui/input";
@@ -43,7 +43,7 @@ const PipelineView = () => {
   const [editActionValue, setEditActionValue] = useState('');
 
   // Form state for new org
-  const [newOrg, setNewOrg] = useState({ name: '', sector: '', stage: 'contact' as SalesStage, seriousness: 3, notes: '', nextAction: '' });
+  const [newOrg, setNewOrg] = useState({ name: '', sector: '', stage: 'contact' as SalesStage, seriousness: 3, notes: '', nextAction: '', actionOwner: teamMembers[0] });
   const [newContact, setNewContact] = useState({ name: '', role: '', email: '', phone: '', assignedTo: teamMembers[0] });
 
   const handleSaveNextAction = (orgId: string) => {
@@ -61,10 +61,11 @@ const PipelineView = () => {
       seriousness: newOrg.seriousness,
       notes: newOrg.notes,
       nextAction: newOrg.nextAction,
+      actionOwner: newOrg.actionOwner,
       createdAt: new Date().toISOString().split('T')[0],
     };
     setOrganizations(prev => [...prev, org]);
-    setNewOrg({ name: '', sector: '', stage: 'contact', seriousness: 3, notes: '', nextAction: '' });
+    setNewOrg({ name: '', sector: '', stage: 'contact', seriousness: 3, notes: '', nextAction: '', actionOwner: teamMembers[0] });
     setShowAddOrg(false);
   };
 
@@ -149,6 +150,25 @@ const PipelineView = () => {
                 <div>
                   <label className="text-sm text-muted-foreground mb-1 block">الخطوة القادمة (Next Best Action)</label>
                   <Input value={newOrg.nextAction} onChange={e => setNewOrg(p => ({ ...p, nextAction: e.target.value }))} placeholder="مثال: جدولة اجتماع تعريفي" />
+                </div>
+                <div>
+                  <label className="text-sm text-muted-foreground mb-1 block">المسؤول عن الخطوة القادمة</label>
+                  <div className="flex gap-2 flex-wrap">
+                    {teamMembers.map(member => (
+                      <button
+                        key={member}
+                        type="button"
+                        onClick={() => setNewOrg(p => ({ ...p, actionOwner: member }))}
+                        className={`px-3 py-1.5 text-xs rounded-lg border transition-colors ${
+                          newOrg.actionOwner === member
+                            ? 'border-primary bg-primary/10 text-primary'
+                            : 'border-border text-muted-foreground hover:border-primary/30'
+                        }`}
+                      >
+                        {member}
+                      </button>
+                    ))}
+                  </div>
                 </div>
                 <Button onClick={handleAddOrg} className="w-full gradient-gold text-primary-foreground shadow-gold">إضافة</Button>
               </div>
@@ -257,11 +277,18 @@ const PipelineView = () => {
                                 onClick={e => { e.stopPropagation(); setEditingAction(org.id); setEditActionValue(org.nextAction || ''); }}
                               >
                                 <Zap className="w-3.5 h-3.5 text-warning shrink-0" />
-                                {org.nextAction ? (
-                                  <p className="text-xs text-warning/90 leading-relaxed flex-1">{org.nextAction}</p>
-                                ) : (
-                                  <p className="text-xs text-muted-foreground/50 italic flex-1">أضف الخطوة القادمة...</p>
-                                )}
+                                <div className="flex-1 min-w-0">
+                                  {org.nextAction ? (
+                                    <p className="text-xs text-warning/90 leading-relaxed">{org.nextAction}</p>
+                                  ) : (
+                                    <p className="text-xs text-muted-foreground/50 italic">أضف الخطوة القادمة...</p>
+                                  )}
+                                  {org.actionOwner && (
+                                    <span className="text-[10px] text-muted-foreground flex items-center gap-0.5 mt-0.5">
+                                      <UserCircle className="w-3 h-3" /> {org.actionOwner}
+                                    </span>
+                                  )}
+                                </div>
                                 <Pencil className="w-3 h-3 text-muted-foreground/0 group-hover/action:text-muted-foreground/50 transition-colors shrink-0" />
                               </div>
                             )}
