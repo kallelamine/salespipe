@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
-import { Phone, Mail, Calendar, CheckSquare, RotateCcw, Check } from "lucide-react";
-import { mockActivities } from "@/data/mockData";
+import { Phone, Mail, Calendar, CheckSquare, RotateCcw, Check, Presentation } from "lucide-react";
+import { mockActivities, mockOrganizations } from "@/data/mockData";
 
 const typeIcons: Record<string, typeof Phone> = {
   call: Phone,
@@ -8,6 +8,7 @@ const typeIcons: Record<string, typeof Phone> = {
   email: Mail,
   task: CheckSquare,
   followup: RotateCcw,
+  presentation: Presentation,
 };
 
 const typeLabels: Record<string, string> = {
@@ -16,12 +17,17 @@ const typeLabels: Record<string, string> = {
   email: 'بريد',
   task: 'مهمة',
   followup: 'متابعة',
+  presentation: 'عرض تقديمي',
 };
 
 const priorityColors: Record<string, string> = {
   high: 'border-r-destructive',
   medium: 'border-r-warning',
   low: 'border-r-muted-foreground',
+};
+
+const getOrgName = (orgId: string) => {
+  return mockOrganizations.find(o => o.id === orgId)?.name || orgId;
 };
 
 const ActivitiesView = () => {
@@ -37,11 +43,10 @@ const ActivitiesView = () => {
         </button>
       </div>
 
-      {/* Pending */}
       <div className="space-y-2">
         <h3 className="text-sm font-bold text-muted-foreground mb-3">قيد التنفيذ ({pending.length})</h3>
         {pending.map((activity, i) => {
-          const Icon = typeIcons[activity.type];
+          const Icon = typeIcons[activity.type] || CheckSquare;
           return (
             <motion.div
               key={activity.id}
@@ -56,7 +61,7 @@ const ActivitiesView = () => {
               <div className="flex-1 min-w-0">
                 <h4 className="text-sm font-medium text-foreground truncate">{activity.title}</h4>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  {typeLabels[activity.type]} · {activity.relatedTo} · {activity.dueDate}
+                  {typeLabels[activity.type]} · {getOrgName(activity.organizationId)} · {activity.dueDate}
                 </p>
               </div>
               <button className="p-2 rounded-md bg-secondary hover:bg-success/20 transition-colors shrink-0">
@@ -67,12 +72,11 @@ const ActivitiesView = () => {
         })}
       </div>
 
-      {/* Completed */}
       {completed.length > 0 && (
         <div className="space-y-2">
           <h3 className="text-sm font-bold text-muted-foreground mb-3">مكتملة ({completed.length})</h3>
           {completed.map((activity) => {
-            const Icon = typeIcons[activity.type];
+            const Icon = typeIcons[activity.type] || CheckSquare;
             return (
               <div
                 key={activity.id}
@@ -83,7 +87,7 @@ const ActivitiesView = () => {
                 </div>
                 <div className="flex-1 min-w-0">
                   <h4 className="text-sm font-medium text-foreground line-through truncate">{activity.title}</h4>
-                  <p className="text-xs text-muted-foreground mt-0.5">{activity.relatedTo}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{getOrgName(activity.organizationId)}</p>
                 </div>
                 <Check className="w-4 h-4 text-success shrink-0" />
               </div>

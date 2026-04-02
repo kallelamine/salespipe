@@ -1,13 +1,12 @@
 import { motion } from "framer-motion";
 import { Users, Target, Briefcase, DollarSign } from "lucide-react";
-import { mockContacts } from "@/data/mockData";
+import { mockOrganizations, mockOpportunities } from "@/data/mockData";
 
 const StatsCards = () => {
-  const contacts = mockContacts.filter(c => c.stage === 'contact').length;
-  const leads = mockContacts.filter(c => c.stage === 'lead').length;
-  const opportunities = mockContacts.filter(c => c.stage === 'opportunity').length;
-  const projects = mockContacts.filter(c => c.stage === 'project').length;
-  const totalRevenue = mockContacts.filter(c => c.value).reduce((sum, c) => sum + (c.value || 0), 0);
+  const contacts = mockOrganizations.filter(o => o.stage === 'contact').length;
+  const leads = mockOrganizations.filter(o => o.stage === 'lead').length;
+  const opportunities = mockOrganizations.filter(o => o.stage === 'opportunity').length;
+  const totalRevenue = mockOpportunities.filter(o => o.status === 'won').reduce((sum, o) => sum + (o.value || 0), 0);
 
   const stats = [
     { label: 'جهات الاتصال', value: contacts, icon: Users, color: 'text-info' },
