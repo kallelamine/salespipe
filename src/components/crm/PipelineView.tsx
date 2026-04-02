@@ -145,6 +145,10 @@ const PipelineView = () => {
                   <label className="text-sm text-muted-foreground mb-1 block">ملاحظات</label>
                   <Input value={newOrg.notes} onChange={e => setNewOrg(p => ({ ...p, notes: e.target.value }))} placeholder="ملاحظات اختيارية..." />
                 </div>
+                <div>
+                  <label className="text-sm text-muted-foreground mb-1 block">الخطوة القادمة (Next Best Action)</label>
+                  <Input value={newOrg.nextAction} onChange={e => setNewOrg(p => ({ ...p, nextAction: e.target.value }))} placeholder="مثال: جدولة اجتماع تعريفي" />
+                </div>
                 <Button onClick={handleAddOrg} className="w-full gradient-gold text-primary-foreground shadow-gold">إضافة</Button>
               </div>
             </DialogContent>
