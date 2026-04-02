@@ -24,6 +24,7 @@ export interface Organization {
   seriousness: number; // 1-5 نجوم
   notes?: string;
   nextAction?: string;
+  logo?: string; // URL or initials fallback
   createdAt: string;
 }
 
