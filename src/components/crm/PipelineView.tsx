@@ -40,6 +40,8 @@ const StarRatingInput = ({ value, onChange }: { value: number; onChange: (v: num
 );
 
 const PipelineView = ({ teamMembers }: PipelineViewProps) => {
+  const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');
+  const [sortBy, setSortBy] = useState<'stage' | 'action' | 'owner' | 'seriousness'>('stage');
   const [organizations, setOrganizations] = useState(mockOrganizations);
   const [contacts, setContacts] = useState(mockContacts);
   const [expandedOrg, setExpandedOrg] = useState<string | null>(null);
