@@ -307,7 +307,7 @@ const PipelineView = () => {
                                     ) : (
                                       <div
                                         className="flex items-center gap-1.5 group/action cursor-pointer"
-                                        onClick={e => { e.stopPropagation(); setEditingAction(org.id); setEditActionValue(org.nextAction || ''); }}
+                                        onClick={e => { e.stopPropagation(); setEditingAction(org.id); setEditActionValue(org.nextAction || ''); setEditActionOwner(org.actionOwner || teamMembers[0]); }}
                                       >
                                         <Zap className="w-3.5 h-3.5 text-warning shrink-0" />
                                         <div className="flex-1 min-w-0">
