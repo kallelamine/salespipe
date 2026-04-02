@@ -331,26 +331,15 @@ const PipelineView = ({ teamMembers }: PipelineViewProps) => {
                                           ))}
                                         </div>
                                       </div>
-                                    ) : (
-                                      <div
-                                        className="flex items-center gap-1.5 group/action cursor-pointer"
-                                        onClick={e => { e.stopPropagation(); setEditingAction(org.id); setEditActionValue(org.nextAction || ''); setEditActionOwner(org.actionOwner || teamMembers[0]); }}
-                                      >
-                                        <Zap className="w-3.5 h-3.5 text-warning shrink-0" />
-                                        <div className="flex-1 min-w-0">
-                                          {org.nextAction ? (
-                                            <p className="text-xs text-warning/90 leading-relaxed">{org.nextAction}</p>
                                     ) : recordingOutcome === org.id ? (
                                       <div className="space-y-2" onClick={e => e.stopPropagation()}>
                                         <p className="text-xs text-foreground mb-1">تسجيل نتيجة: <span className="text-warning">{org.nextAction}</span></p>
-                                        <div className="flex items-center gap-2">
-                                          <button
-                                            onClick={() => handleRecordOutcome(org.id, 'success')}
-                                            className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 text-xs rounded-lg bg-success/10 border border-success/30 text-success hover:bg-success/20 transition-colors"
-                                          >
-                                            <CheckCircle2 className="w-3.5 h-3.5" /> نجاح - المرحلة التالية
-                                          </button>
-                                        </div>
+                                        <button
+                                          onClick={() => handleRecordOutcome(org.id, 'success')}
+                                          className="w-full flex items-center justify-center gap-1 px-2 py-1.5 text-xs rounded-lg bg-success/10 border border-success/30 text-success hover:bg-success/20 transition-colors"
+                                        >
+                                          <CheckCircle2 className="w-3.5 h-3.5" /> نجاح - المرحلة التالية
+                                        </button>
                                         <div className="space-y-1.5">
                                           <Input
                                             value={lossReason}
