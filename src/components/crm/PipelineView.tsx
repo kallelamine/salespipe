@@ -340,16 +340,66 @@ const PipelineView = ({ teamMembers }: PipelineViewProps) => {
                                         <div className="flex-1 min-w-0">
                                           {org.nextAction ? (
                                             <p className="text-xs text-warning/90 leading-relaxed">{org.nextAction}</p>
-                                          ) : (
-                                            <p className="text-xs text-muted-foreground/50 italic">أضف الخطوة القادمة...</p>
-                                          )}
-                                          {org.actionOwner && (
-                                            <span className="text-[10px] text-muted-foreground flex items-center gap-0.5 mt-0.5">
-                                              <UserCircle className="w-3 h-3" /> {org.actionOwner}
-                                            </span>
-                                          )}
+                                    ) : recordingOutcome === org.id ? (
+                                      <div className="space-y-2" onClick={e => e.stopPropagation()}>
+                                        <p className="text-xs text-foreground mb-1">تسجيل نتيجة: <span className="text-warning">{org.nextAction}</span></p>
+                                        <div className="flex items-center gap-2">
+                                          <button
+                                            onClick={() => handleRecordOutcome(org.id, 'success')}
+                                            className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 text-xs rounded-lg bg-success/10 border border-success/30 text-success hover:bg-success/20 transition-colors"
+                                          >
+                                            <CheckCircle2 className="w-3.5 h-3.5" /> نجاح - المرحلة التالية
+                                          </button>
                                         </div>
-                                        <Pencil className="w-3 h-3 text-muted-foreground/0 group-hover/action:text-muted-foreground/50 transition-colors shrink-0" />
+                                        <div className="space-y-1.5">
+                                          <Input
+                                            value={lossReason}
+                                            onChange={e => setLossReason(e.target.value)}
+                                            placeholder="سبب الخسارة..."
+                                            className="h-7 text-xs bg-background border-border"
+                                          />
+                                          <button
+                                            onClick={() => handleRecordOutcome(org.id, 'lost')}
+                                            disabled={!lossReason.trim()}
+                                            className="w-full flex items-center justify-center gap-1 px-2 py-1.5 text-xs rounded-lg bg-destructive/10 border border-destructive/30 text-destructive hover:bg-destructive/20 transition-colors disabled:opacity-40"
+                                          >
+                                            <XCircle className="w-3.5 h-3.5" /> خسارة
+                                          </button>
+                                        </div>
+                                        <button onClick={() => { setRecordingOutcome(null); setLossReason(''); }} className="w-full text-[10px] text-muted-foreground hover:text-foreground">
+                                          إلغاء
+                                        </button>
+                                      </div>
+                                    ) : (
+                                      <div className="flex items-center gap-1.5 group/action">
+                                        <div
+                                          className="flex items-center gap-1.5 flex-1 min-w-0 cursor-pointer"
+                                          onClick={e => { e.stopPropagation(); setEditingAction(org.id); setEditActionValue(org.nextAction || ''); setEditActionOwner(org.actionOwner || teamMembers[0]); }}
+                                        >
+                                          <Zap className="w-3.5 h-3.5 text-warning shrink-0" />
+                                          <div className="flex-1 min-w-0">
+                                            {org.nextAction ? (
+                                              <p className="text-xs text-warning/90 leading-relaxed">{org.nextAction}</p>
+                                            ) : (
+                                              <p className="text-xs text-muted-foreground/50 italic">أضف الخطوة القادمة...</p>
+                                            )}
+                                            {org.actionOwner && (
+                                              <span className="text-[10px] text-muted-foreground flex items-center gap-0.5 mt-0.5">
+                                                <UserCircle className="w-3 h-3" /> {org.actionOwner}
+                                              </span>
+                                            )}
+                                          </div>
+                                          <Pencil className="w-3 h-3 text-muted-foreground/0 group-hover/action:text-muted-foreground/50 transition-colors shrink-0" />
+                                        </div>
+                                        {org.nextAction && (
+                                          <button
+                                            onClick={e => { e.stopPropagation(); setRecordingOutcome(org.id); setLossReason(''); }}
+                                            className="p-1.5 rounded-lg bg-primary/10 hover:bg-primary/20 border border-primary/20 transition-colors shrink-0"
+                                            title="تسجيل النتيجة"
+                                          >
+                                            <CheckIcon className="w-3 h-3 text-primary" />
+                                          </button>
+                                        )}
                                       </div>
                                     )}
                                   </div>
