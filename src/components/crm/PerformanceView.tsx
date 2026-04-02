@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { TrendingDown, TrendingUp, Clock, BarChart3, UserCircle, AlertTriangle, CheckCircle2, XCircle, Filter } from "lucide-react";
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { mockActionLogs, mockOrganizations, lostOrganizations, salesStageLabels, salesStageColors, type SalesStage, type ActionLog } from "@/data/mockData";
 
 const PerformanceView = () => {
