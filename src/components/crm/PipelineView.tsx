@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Phone, Mail, ArrowLeft, Star, Plus, Users, ChevronDown, ChevronUp, X, Zap, Pencil, Check as CheckIcon, Building2, UserCircle } from "lucide-react";
+import { motion } from "framer-motion";
+import { DragDropContext, Droppable, Draggable, type DropResult } from "@hello-pangea/dnd";
+import { Phone, Mail, ArrowLeft, Star, Plus, Users, ChevronDown, ChevronUp, X, Zap, Pencil, Check as CheckIcon, Building2, UserCircle, GripVertical } from "lucide-react";
 
 import { mockOrganizations, mockContacts, mockOpportunities, salesStageLabels, salesStageColors, teamMembers, type SalesStage, type Organization, type ContactPerson } from "@/data/mockData";
 import { Input } from "@/components/ui/input";
@@ -49,6 +50,13 @@ const PipelineView = () => {
   const handleSaveNextAction = (orgId: string) => {
     setOrganizations(prev => prev.map(o => o.id === orgId ? { ...o, nextAction: editActionValue } : o));
     setEditingAction(null);
+  };
+
+  const handleDragEnd = (result: DropResult) => {
+    const { draggableId, destination } = result;
+    if (!destination) return;
+    const newStage = destination.droppableId as SalesStage;
+    setOrganizations(prev => prev.map(o => o.id === draggableId ? { ...o, stage: newStage } : o));
   };
 
   const handleAddOrg = () => {
@@ -178,192 +186,193 @@ const PipelineView = () => {
       </div>
 
       {/* Kanban Board */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {stages.map((stage, stageIndex) => {
-          const stageOrgs = organizations.filter(o => o.stage === stage);
-          return (
-            <motion.div
-              key={stage}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: stageIndex * 0.1 }}
-              className="space-y-3"
-            >
-              {/* Stage Header */}
-              <div className="flex items-center justify-between px-1">
-                <div className="flex items-center gap-2">
-                  <span className={`w-3 h-3 rounded-full ${salesStageColors[stage]}`} />
-                  <span className="text-sm font-bold text-foreground">{salesStageLabels[stage]}</span>
+      <DragDropContext onDragEnd={handleDragEnd}>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {stages.map((stage, stageIndex) => {
+            const stageOrgs = organizations.filter(o => o.stage === stage);
+            return (
+              <motion.div
+                key={stage}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: stageIndex * 0.1 }}
+                className="space-y-3"
+              >
+                {/* Stage Header */}
+                <div className="flex items-center justify-between px-1">
+                  <div className="flex items-center gap-2">
+                    <span className={`w-3 h-3 rounded-full ${salesStageColors[stage]}`} />
+                    <span className="text-sm font-bold text-foreground">{salesStageLabels[stage]}</span>
+                  </div>
+                  <span className="text-xs bg-secondary text-secondary-foreground px-2 py-0.5 rounded-full">
+                    {stageOrgs.length}
+                  </span>
                 </div>
-                <span className="text-xs bg-secondary text-secondary-foreground px-2 py-0.5 rounded-full">
-                  {stageOrgs.length}
-                </span>
-              </div>
 
-              {/* Organization Cards */}
-              <div className="space-y-2">
-                <AnimatePresence>
-                  {stageOrgs.map((org) => {
-                    const orgContacts = contacts.filter(c => c.organizationId === org.id);
-                    const orgOpportunities = mockOpportunities.filter(o => o.organizationId === org.id);
-                    const isExpanded = expandedOrg === org.id;
-                    const totalValue = orgOpportunities.reduce((sum, o) => sum + (o.value || 0), 0);
+                {/* Droppable Column */}
+                <Droppable droppableId={stage}>
+                  {(provided, snapshot) => (
+                    <div
+                      ref={provided.innerRef}
+                      {...provided.droppableProps}
+                      className={`space-y-2 min-h-[80px] rounded-lg p-1 transition-colors ${snapshot.isDraggingOver ? 'bg-primary/5 border border-dashed border-primary/30' : ''}`}
+                    >
+                      {stageOrgs.map((org, index) => {
+                        const orgContacts = contacts.filter(c => c.organizationId === org.id);
+                        const orgOpportunities = mockOpportunities.filter(o => o.organizationId === org.id);
+                        const isExpanded = expandedOrg === org.id;
+                        const totalValue = orgOpportunities.reduce((sum, o) => sum + (o.value || 0), 0);
 
-                    return (
-                      <motion.div
-                        key={org.id}
-                        layout
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.95 }}
-                        className="gradient-card border border-border rounded-lg shadow-card hover:border-primary/30 transition-colors"
-                      >
-                        {/* Org Header */}
-                        <div
-                          className="p-4 cursor-pointer"
-                          onClick={() => setExpandedOrg(isExpanded ? null : org.id)}
-                        >
-                          {/* Icon + Name row */}
-                          <div className="flex items-start gap-3 mb-3">
-                            <div className="h-9 w-9 shrink-0 rounded-lg bg-secondary flex items-center justify-center border border-border">
-                              <Building2 className="w-4 h-4 text-muted-foreground" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center justify-between">
-                                <h3 className="text-sm font-bold text-foreground truncate">{org.name}</h3>
-                                {isExpanded ? <ChevronUp className="w-4 h-4 text-muted-foreground shrink-0" /> : <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" />}
-                              </div>
-                              <p className="text-xs text-muted-foreground mt-0.5">{org.sector}</p>
-                            </div>
-                          </div>
-
-                          {/* Stats row */}
-                          <div className="flex items-center justify-between mb-2">
-                            <StarRating rating={org.seriousness} />
-                            <div className="flex items-center gap-3">
-                              <span className="text-xs text-muted-foreground flex items-center gap-1">
-                                <Users className="w-3 h-3" /> {orgContacts.length}
-                              </span>
-                              {totalValue > 0 && (
-                                <span className="text-xs font-bold text-primary">
-                                  {totalValue.toLocaleString()} ر.س
-                                </span>
-                              )}
-                            </div>
-                          </div>
-
-                          {/* Next Best Action */}
-                          <div className="bg-secondary/40 rounded-md p-2">
-                            {editingAction === org.id ? (
-                              <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
-                                <Input
-                                  value={editActionValue}
-                                  onChange={e => setEditActionValue(e.target.value)}
-                                  placeholder="الخطوة القادمة..."
-                                  className="h-7 text-xs bg-background border-border"
-                                  autoFocus
-                                  onKeyDown={e => e.key === 'Enter' && handleSaveNextAction(org.id)}
-                                />
-                                <button onClick={() => handleSaveNextAction(org.id)} className="p-1 rounded bg-success/20 hover:bg-success/30 shrink-0">
-                                  <CheckIcon className="w-3 h-3 text-success" />
-                                </button>
-                                <button onClick={() => setEditingAction(null)} className="p-1 rounded bg-secondary hover:bg-destructive/20 shrink-0">
-                                  <X className="w-3 h-3 text-muted-foreground" />
-                                </button>
-                              </div>
-                            ) : (
+                        return (
+                          <Draggable key={org.id} draggableId={org.id} index={index}>
+                            {(provided, snapshot) => (
                               <div
-                                className="flex items-center gap-1.5 group/action cursor-pointer"
-                                onClick={e => { e.stopPropagation(); setEditingAction(org.id); setEditActionValue(org.nextAction || ''); }}
+                                ref={provided.innerRef}
+                                {...provided.draggableProps}
+                                className={`gradient-card border border-border rounded-lg shadow-card hover:border-primary/30 transition-colors ${snapshot.isDragging ? 'shadow-lg ring-2 ring-primary/20' : ''}`}
                               >
-                                <Zap className="w-3.5 h-3.5 text-warning shrink-0" />
-                                <div className="flex-1 min-w-0">
-                                  {org.nextAction ? (
-                                    <p className="text-xs text-warning/90 leading-relaxed">{org.nextAction}</p>
-                                  ) : (
-                                    <p className="text-xs text-muted-foreground/50 italic">أضف الخطوة القادمة...</p>
-                                  )}
-                                  {org.actionOwner && (
-                                    <span className="text-[10px] text-muted-foreground flex items-center gap-0.5 mt-0.5">
-                                      <UserCircle className="w-3 h-3" /> {org.actionOwner}
-                                    </span>
-                                  )}
+                                {/* Org Header */}
+                                <div
+                                  className="p-4 cursor-pointer"
+                                  onClick={() => setExpandedOrg(isExpanded ? null : org.id)}
+                                >
+                                  {/* Icon + Name row */}
+                                  <div className="flex items-start gap-3 mb-3">
+                                    <div {...provided.dragHandleProps} className="h-9 w-9 shrink-0 rounded-lg bg-secondary flex items-center justify-center border border-border cursor-grab active:cursor-grabbing hover:bg-secondary/80 transition-colors">
+                                      <GripVertical className="w-4 h-4 text-muted-foreground" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-center justify-between">
+                                        <h3 className="text-sm font-bold text-foreground truncate">{org.name}</h3>
+                                        {isExpanded ? <ChevronUp className="w-4 h-4 text-muted-foreground shrink-0" /> : <ChevronDown className="w-4 h-4 text-muted-foreground shrink-0" />}
+                                      </div>
+                                      <p className="text-xs text-muted-foreground mt-0.5">{org.sector}</p>
+                                    </div>
+                                  </div>
+
+                                  {/* Stats row */}
+                                  <div className="flex items-center justify-between mb-2">
+                                    <StarRating rating={org.seriousness} />
+                                    <div className="flex items-center gap-3">
+                                      <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                        <Users className="w-3 h-3" /> {orgContacts.length}
+                                      </span>
+                                      {totalValue > 0 && (
+                                        <span className="text-xs font-bold text-primary">
+                                          {totalValue.toLocaleString()} ر.س
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  {/* Next Best Action */}
+                                  <div className="bg-secondary/40 rounded-md p-2">
+                                    {editingAction === org.id ? (
+                                      <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
+                                        <Input
+                                          value={editActionValue}
+                                          onChange={e => setEditActionValue(e.target.value)}
+                                          placeholder="الخطوة القادمة..."
+                                          className="h-7 text-xs bg-background border-border"
+                                          autoFocus
+                                          onKeyDown={e => e.key === 'Enter' && handleSaveNextAction(org.id)}
+                                        />
+                                        <button onClick={() => handleSaveNextAction(org.id)} className="p-1 rounded bg-success/20 hover:bg-success/30 shrink-0">
+                                          <CheckIcon className="w-3 h-3 text-success" />
+                                        </button>
+                                        <button onClick={() => setEditingAction(null)} className="p-1 rounded bg-secondary hover:bg-destructive/20 shrink-0">
+                                          <X className="w-3 h-3 text-muted-foreground" />
+                                        </button>
+                                      </div>
+                                    ) : (
+                                      <div
+                                        className="flex items-center gap-1.5 group/action cursor-pointer"
+                                        onClick={e => { e.stopPropagation(); setEditingAction(org.id); setEditActionValue(org.nextAction || ''); }}
+                                      >
+                                        <Zap className="w-3.5 h-3.5 text-warning shrink-0" />
+                                        <div className="flex-1 min-w-0">
+                                          {org.nextAction ? (
+                                            <p className="text-xs text-warning/90 leading-relaxed">{org.nextAction}</p>
+                                          ) : (
+                                            <p className="text-xs text-muted-foreground/50 italic">أضف الخطوة القادمة...</p>
+                                          )}
+                                          {org.actionOwner && (
+                                            <span className="text-[10px] text-muted-foreground flex items-center gap-0.5 mt-0.5">
+                                              <UserCircle className="w-3 h-3" /> {org.actionOwner}
+                                            </span>
+                                          )}
+                                        </div>
+                                        <Pencil className="w-3 h-3 text-muted-foreground/0 group-hover/action:text-muted-foreground/50 transition-colors shrink-0" />
+                                      </div>
+                                    )}
+                                  </div>
                                 </div>
-                                <Pencil className="w-3 h-3 text-muted-foreground/0 group-hover/action:text-muted-foreground/50 transition-colors shrink-0" />
+
+                                {/* Expanded: Contacts + Opportunities */}
+                                {isExpanded && (
+                                  <div className="px-4 pb-4 space-y-3 border-t border-border pt-3">
+                                    {/* Contacts */}
+                                    <div>
+                                      <div className="flex items-center justify-between mb-2">
+                                        <span className="text-xs font-bold text-muted-foreground">الأشخاص</span>
+                                        <button
+                                          onClick={(e) => { e.stopPropagation(); setShowAddContact(org.id); }}
+                                          className="text-xs text-primary hover:text-primary/80"
+                                        >
+                                          + إضافة
+                                        </button>
+                                      </div>
+                                      {orgContacts.map(contact => (
+                                        <div key={contact.id} className="flex items-center justify-between py-1.5">
+                                          <div>
+                                            <p className="text-xs font-medium text-foreground">{contact.name}</p>
+                                            <p className="text-[10px] text-muted-foreground">{contact.role} · {contact.assignedTo}</p>
+                                          </div>
+                                          <div className="flex items-center gap-1">
+                                            <button className="p-1 rounded bg-secondary hover:bg-secondary/80">
+                                              <Phone className="w-3 h-3 text-muted-foreground" />
+                                            </button>
+                                            <button className="p-1 rounded bg-secondary hover:bg-secondary/80">
+                                              <Mail className="w-3 h-3 text-muted-foreground" />
+                                            </button>
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+
+                                    {/* Opportunities */}
+                                    {orgOpportunities.length > 0 && (
+                                      <div>
+                                        <span className="text-xs font-bold text-muted-foreground block mb-2">الفرص</span>
+                                        {orgOpportunities.map(opp => (
+                                          <div key={opp.id} className="flex items-center justify-between py-1.5">
+                                            <p className="text-xs text-foreground">{opp.title}</p>
+                                            <span className="text-xs text-primary font-bold">{opp.value?.toLocaleString()} ر.س</span>
+                                          </div>
+                                        ))}
+                                      </div>
+                                    )}
+
+                                    {/* Notes */}
+                                    {org.notes && (
+                                      <p className="text-xs text-muted-foreground bg-secondary/50 rounded p-2">{org.notes}</p>
+                                    )}
+                                  </div>
+                                )}
                               </div>
                             )}
-                          </div>
-                        </div>
-
-                        {/* Expanded: Contacts + Opportunities */}
-                        <AnimatePresence>
-                          {isExpanded && (
-                            <motion.div
-                              initial={{ height: 0, opacity: 0 }}
-                              animate={{ height: 'auto', opacity: 1 }}
-                              exit={{ height: 0, opacity: 0 }}
-                              className="overflow-hidden"
-                            >
-                              <div className="px-4 pb-4 space-y-3 border-t border-border pt-3">
-                                {/* Contacts */}
-                                <div>
-                                  <div className="flex items-center justify-between mb-2">
-                                    <span className="text-xs font-bold text-muted-foreground">الأشخاص</span>
-                                    <button
-                                      onClick={(e) => { e.stopPropagation(); setShowAddContact(org.id); }}
-                                      className="text-xs text-primary hover:text-primary/80"
-                                    >
-                                      + إضافة
-                                    </button>
-                                  </div>
-                                  {orgContacts.map(contact => (
-                                    <div key={contact.id} className="flex items-center justify-between py-1.5">
-                                      <div>
-                                        <p className="text-xs font-medium text-foreground">{contact.name}</p>
-                                        <p className="text-[10px] text-muted-foreground">{contact.role} · {contact.assignedTo}</p>
-                                      </div>
-                                      <div className="flex items-center gap-1">
-                                        <button className="p-1 rounded bg-secondary hover:bg-secondary/80">
-                                          <Phone className="w-3 h-3 text-muted-foreground" />
-                                        </button>
-                                        <button className="p-1 rounded bg-secondary hover:bg-secondary/80">
-                                          <Mail className="w-3 h-3 text-muted-foreground" />
-                                        </button>
-                                      </div>
-                                    </div>
-                                  ))}
-                                </div>
-
-                                {/* Opportunities */}
-                                {orgOpportunities.length > 0 && (
-                                  <div>
-                                    <span className="text-xs font-bold text-muted-foreground block mb-2">الفرص</span>
-                                    {orgOpportunities.map(opp => (
-                                      <div key={opp.id} className="flex items-center justify-between py-1.5">
-                                        <p className="text-xs text-foreground">{opp.title}</p>
-                                        <span className="text-xs text-primary font-bold">{opp.value?.toLocaleString()} ر.س</span>
-                                      </div>
-                                    ))}
-                                  </div>
-                                )}
-
-                                {/* Notes */}
-                                {org.notes && (
-                                  <p className="text-xs text-muted-foreground bg-secondary/50 rounded p-2">{org.notes}</p>
-                                )}
-                              </div>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-                      </motion.div>
-                    );
-                  })}
-                </AnimatePresence>
-              </div>
-            </motion.div>
-          );
-        })}
-      </div>
+                          </Draggable>
+                        );
+                      })}
+                      {provided.placeholder}
+                    </div>
+                  )}
+                </Droppable>
+              </motion.div>
+            );
+          })}
+        </div>
+      </DragDropContext>
 
       {/* Add Contact Dialog */}
       <Dialog open={!!showAddContact} onOpenChange={() => setShowAddContact(null)}>
