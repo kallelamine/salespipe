@@ -1,11 +1,20 @@
 import { useState, useRef } from "react";
-import { Upload, FileSpreadsheet, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Upload, FileSpreadsheet, AlertCircle, CheckCircle2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import type { Organization, SalesStage } from "@/data/mockData";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
-interface CsvImportDialogProps {
-  onImport: (orgs: Organization[]) => void;
+type SalesStage = 'contact' | 'lead' | 'opportunity' | 'project';
+
+interface ParsedOrg {
+  name: string;
+  sector: string;
+  stage: SalesStage;
+  seriousness: number;
+  notes: string;
+  next_action: string;
 }
 
 const stageMap: Record<string, SalesStage> = {
@@ -32,12 +41,14 @@ const parseCsvLine = (line: string): string[] => {
   return result;
 };
 
-const CsvImportDialog = ({ onImport }: CsvImportDialogProps) => {
+const CsvImportDialog = () => {
   const [open, setOpen] = useState(false);
-  const [preview, setPreview] = useState<Organization[]>([]);
+  const [preview, setPreview] = useState<ParsedOrg[]>([]);
   const [error, setError] = useState('');
   const [fileName, setFileName] = useState('');
+  const [importing, setImporting] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const qc = useQueryClient();
 
   const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -59,22 +70,18 @@ const CsvImportDialog = ({ onImport }: CsvImportDialogProps) => {
         const seriousnessIdx = headers.findIndex(h => ['seriousness', 'الجدية', 'جدية'].includes(h));
         const notesIdx = headers.findIndex(h => ['notes', 'ملاحظات'].includes(h));
         const nextActionIdx = headers.findIndex(h => ['nextaction', 'next action', 'الخطوة القادمة', 'خطوة'].includes(h));
-        const actionOwnerIdx = headers.findIndex(h => ['actionowner', 'action owner', 'المسؤول', 'مسؤول'].includes(h));
 
         if (nameIdx === -1) { setError('لم يتم العثور على عمود "الاسم" أو "name" في الملف'); return; }
 
-        const orgs: Organization[] = lines.slice(1).map((line, i) => {
+        const orgs: ParsedOrg[] = lines.slice(1).map((line) => {
           const cols = parseCsvLine(line);
           return {
-            id: `csv_${Date.now()}_${i}`,
             name: cols[nameIdx] || '',
             sector: sectorIdx >= 0 ? cols[sectorIdx] || '' : '',
             stage: stageIdx >= 0 ? (stageMap[cols[stageIdx]?.trim()] || 'contact') : 'contact',
-            seriousness: seriousnessIdx >= 0 ? Math.min(5, Math.max(1, parseInt(cols[seriousnessIdx]) || 1)) : 1,
-            notes: notesIdx >= 0 ? cols[notesIdx] : undefined,
-            nextAction: nextActionIdx >= 0 ? cols[nextActionIdx] : undefined,
-            actionOwner: actionOwnerIdx >= 0 ? cols[actionOwnerIdx] : undefined,
-            createdAt: new Date().toISOString().split('T')[0],
+            seriousness: seriousnessIdx >= 0 ? Math.min(5, Math.max(1, parseInt(cols[seriousnessIdx]) || 3)) : 3,
+            notes: notesIdx >= 0 ? cols[notesIdx] || '' : '',
+            next_action: nextActionIdx >= 0 ? cols[nextActionIdx] || '' : '',
           };
         }).filter(o => o.name.trim());
 
@@ -86,11 +93,31 @@ const CsvImportDialog = ({ onImport }: CsvImportDialogProps) => {
     reader.readAsText(file);
   };
 
-  const handleImport = () => {
-    onImport(preview);
-    setPreview([]);
-    setFileName('');
-    setOpen(false);
+  const handleImport = async () => {
+    setImporting(true);
+    try {
+      const rows = preview.map(org => ({
+        name: org.name,
+        sector: org.sector,
+        stage: org.stage,
+        seriousness: org.seriousness,
+        notes: org.notes,
+        next_action: org.next_action,
+      }));
+
+      const { error } = await supabase.from("organizations").insert(rows);
+      if (error) throw error;
+
+      qc.invalidateQueries({ queryKey: ["organizations"] });
+      toast.success(`تم استيراد ${preview.length} جهة بنجاح`);
+      setPreview([]);
+      setFileName('');
+      setOpen(false);
+    } catch (err: any) {
+      toast.error("خطأ في الاستيراد: " + (err.message || "حدث خطأ"));
+    } finally {
+      setImporting(false);
+    }
   };
 
   return (
@@ -108,7 +135,7 @@ const CsvImportDialog = ({ onImport }: CsvImportDialogProps) => {
         <div className="space-y-4 mt-2">
           <div className="text-xs text-muted-foreground bg-secondary/50 rounded-lg p-3 space-y-1">
             <p className="font-bold text-foreground mb-1">الأعمدة المدعومة:</p>
-            <p>الاسم (مطلوب) · القطاع · المرحلة · الجدية (1-5) · ملاحظات · الخطوة القادمة · المسؤول</p>
+            <p>الاسم (مطلوب) · القطاع · المرحلة · الجدية (1-5) · ملاحظات · الخطوة القادمة</p>
             <p className="mt-1">يمكن استخدام الأسماء بالعربية أو الإنجليزية</p>
           </div>
 
@@ -132,7 +159,7 @@ const CsvImportDialog = ({ onImport }: CsvImportDialogProps) => {
 
           {preview.length > 0 && (
             <>
-              <div className="flex items-center gap-2 text-success text-xs">
+              <div className="flex items-center gap-2 text-emerald-400 text-xs">
                 <CheckCircle2 className="w-4 h-4" />
                 تم قراءة {preview.length} جهة بنجاح
               </div>
@@ -144,7 +171,8 @@ const CsvImportDialog = ({ onImport }: CsvImportDialogProps) => {
                   </div>
                 ))}
               </div>
-              <Button onClick={handleImport} className="w-full gradient-gold text-primary-foreground shadow-gold">
+              <Button onClick={handleImport} disabled={importing} className="w-full gradient-gold text-primary-foreground shadow-gold">
+                {importing ? <Loader2 className="w-4 h-4 animate-spin ml-2" /> : null}
                 استيراد {preview.length} جهة
               </Button>
             </>
