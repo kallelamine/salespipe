@@ -1,4 +1,4 @@
-import { LayoutDashboard, Users, Handshake, ListTodo, TrendingUp, Settings } from "lucide-react";
+import { LayoutDashboard, Users, Handshake, ListTodo, TrendingUp, Settings, BarChart3 } from "lucide-react";
 
 interface SidebarProps {
   activeTab: string;
