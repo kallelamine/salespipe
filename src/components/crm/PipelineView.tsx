@@ -126,7 +126,25 @@ const PipelineView = ({ teamMembers }: PipelineViewProps) => {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold text-foreground">مسار المبيعات</h2>
+        <div className="flex items-center gap-3">
+          <h2 className="text-xl font-bold text-foreground">مسار المبيعات</h2>
+          <div className="flex items-center bg-secondary rounded-lg p-0.5 border border-border">
+            <button
+              onClick={() => setViewMode('kanban')}
+              className={`p-1.5 rounded-md transition-colors ${viewMode === 'kanban' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+              title="عرض البطاقات"
+            >
+              <LayoutGrid className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setViewMode('list')}
+              className={`p-1.5 rounded-md transition-colors ${viewMode === 'list' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+              title="عرض القائمة"
+            >
+              <List className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
         <div className="flex items-center gap-2">
           <CsvImportDialog onImport={(orgs) => setOrganizations(prev => [...prev, ...orgs])} />
           <div className="hidden md:flex items-center gap-2 text-xs text-muted-foreground">
